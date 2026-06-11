@@ -56,30 +56,6 @@ npm run dist:win       # build dist/WiFiBillionaireSetup.exe    (run on Windows)
 ```
 > Cross-building Windows from macOS needs Wine; in practice let CI build each OS natively.
 
-### Release commands
-```bash
-# Local publish (needs a GH_TOKEN with repo scope in your env):
-GH_TOKEN=xxxx npm run release:mac     # build + upload mac dmg to the GitHub Release
-GH_TOKEN=xxxx npm run release:win     # build + upload win exe to the same Release
-
-# Recommended: tag-driven CI (.github/workflows/release.yml builds BOTH OSes):
-git tag v5.0.0 && git push origin v5.0.0
-```
-
-### Releasing a version
-`git tag vX.Y.Z && git push origin vX.Y.Z` — CI builds mac+win and creates the
-GitHub Release with `WiFi-Billionaire.dmg`, `WiFi-Billionaire.zip`,
-`WiFiBillionaireSetup.exe`, plus the `latest-mac.yml` / `latest.yml` update
-manifests electron-updater needs. The download links at the top of this README
-always point to the newest release automatically.
-
-### Who can publish (security)
-Only the repository owner can publish. The repo is public, but read-only to
-everyone else: outsiders cannot push tags, create releases, or modify code —
-and pull requests from forks run CI with a **read-only** token, so they can
-never upload installers. Releases are produced exclusively by
-`.github/workflows/release.yml` from `v*` tags pushed by the owner, and apps
-auto-update only from this repo's official Releases.
 
 ### Installer branding
 The mac DMG ships a branded retina background (navy/green/gold, matching the
