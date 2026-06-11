@@ -47,11 +47,12 @@
     ],
     "mac": {
       "target": [
-        "dmg"
+        "dmg",
+        "zip"
       ],
       "category": "public.app-category.simulation-games",
       "icon": "build/icon.png",
-      "artifactName": "WiFi Billionaire.${ext}",
+      "artifactName": "WiFi-Billionaire.${ext}",
       "identity": null
     },
     "dmg": {

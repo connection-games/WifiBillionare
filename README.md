@@ -4,19 +4,32 @@ A 2D idle/life simulator about an internet entrepreneur grinding from a mattress
 in their parents' bedroom to internet billionaire — armed with nothing but WiFi,
 questionable project ideas, and an inner monologue that never stops.
 
-## How to play
+## ⬇️ Download & play
 
-**Option A (simplest):** double-click `index.html` — runs straight from disk, no install.
+**Always the newest version — one click, no account needed:**
 
-**Option B (local server):** `node serve.js` then open <http://localhost:8741>.
+| Platform | Download | Format |
+|---|---|---|
+| 🍎 **macOS** | **[⬇ WiFi-Billionaire.dmg](https://github.com/connection-games/WifiBillionare/releases/latest/download/WiFi-Billionaire.dmg)** | Disk image (recommended) |
+| 🍎 macOS | [⬇ WiFi-Billionaire.zip](https://github.com/connection-games/WifiBillionare/releases/latest/download/WiFi-Billionaire.zip) | Zip — unzip, drag to Applications |
+| 🪟 **Windows** | **[⬇ WiFiBillionaireSetup.exe](https://github.com/connection-games/WifiBillionare/releases/latest/download/WiFiBillionaireSetup.exe)** | Installer |
 
-**Option C (Mac app):** open **WiFi Billionaire** from `/Applications` (or install
-via `build/WiFi Billionaire.dmg`). Rebuild anytime with `./build.sh` — it compiles
-the native wrapper, renders the icon, signs the bundle, and produces the DMG using
-only macOS Command Line Tools (no Xcode).
+All versions: [**Releases page**](https://github.com/connection-games/WifiBillionare/releases/latest)
 
-**Option D (Windows):** unzip `build/WiFi Billionaire (Windows).zip` and run
-`WiFi Billionaire.exe` (legacy manual Electron wrapper).
+### Install on macOS
+1. Open the `.dmg` and drag **WiFi Billionaire** into **Applications** (or unzip the
+   `.zip` and do the same).
+2. **First launch only:** the app isn't notarized by Apple yet, so right-click the app
+   → **Open** → **Open**. (If macOS still refuses: System Settings → Privacy & Security
+   → **Open Anyway**.) After that it opens like any normal app.
+
+### Install on Windows
+Run `WiFiBillionaireSetup.exe` → Next → done. SmartScreen may warn on first install —
+click **More info** → **Run anyway**. Installed apps auto-update from this repo.
+
+### Play in the browser (no install)
+Clone or download this repo, then double-click `index.html` — runs straight from disk.
+Or `node serve.js` and open <http://localhost:8741>.
 
 ---
 
@@ -26,15 +39,15 @@ The canonical distribution is now a single Electron app built with **electron-bu
 and auto-updated from **GitHub Releases** via **electron-updater**. (The old `build.sh`
 Swift wrapper and `build-win.sh` zip are legacy and superseded.)
 
-**Before first release:** set your GitHub repo in `package.json` →
-`build.publish` (`owner` / `repo`). The repo should be **public** for keyless updates.
+Releases publish to `connection-games/WifiBillionare` (configured in `package.json` →
+`build.publish`). The repo is public, so updates need no token on the player's side.
 
 ### Build commands (local)
 ```bash
 npm install            # once
 npm start              # run the app locally (dev, no auto-update)
-npm run dist:mac       # build dist/WiFi Billionaire.dmg   (run on macOS)
-npm run dist:win       # build dist/WiFiBillionaireSetup.exe (run on Windows)
+npm run dist:mac       # build dist/WiFi-Billionaire.dmg + .zip (run on macOS)
+npm run dist:win       # build dist/WiFiBillionaireSetup.exe    (run on Windows)
 ```
 > Cross-building Windows from macOS needs Wine; in practice let CI build each OS natively.
 
@@ -48,13 +61,12 @@ GH_TOKEN=xxxx npm run release:win     # build + upload win exe to the same Relea
 git tag v5.0.0 && git push origin v5.0.0
 ```
 
-### First release
-1. `package.json`: set `build.publish.owner` to your GitHub username and `repo` to your repo.
-2. Push the project to that GitHub repo. Add `.github/workflows/release.yml` (already here).
-3. `git tag v5.0.0 && git push origin v5.0.0` — CI builds mac+win and creates the
-   GitHub Release with `WiFi Billionaire.dmg`, `WiFiBillionaireSetup.exe`, plus the
-   `latest-mac.yml` / `latest.yml` update manifests electron-updater needs.
-4. Mark the release **published** (CI uploads as draft if `releaseType` is draft; default is to publish). Download & install — you're live.
+### Releasing a version
+`git tag vX.Y.Z && git push origin vX.Y.Z` — CI builds mac+win and creates the
+GitHub Release with `WiFi-Billionaire.dmg`, `WiFi-Billionaire.zip`,
+`WiFiBillionaireSetup.exe`, plus the `latest-mac.yml` / `latest.yml` update
+manifests electron-updater needs. The download links at the top of this README
+always point to the newest release automatically.
 
 ### Future updates
 1. Make changes, bump the version in `package.json` (e.g. `5.0.1`).
@@ -85,12 +97,11 @@ dir, never committed, never hardcoded — `js/secrets.js` ships empty). With no 
 Scam Sim gracefully uses offline scripted victims. In the desktop app the key is sent
 straight from the renderer to the main process to OpenAI (no CORS, key never leaves your machine).
 
-The native app (`app/main.swift`) is an AppKit + WKWebView shell that serves the
-game over a custom `wifib://` URL scheme, mirrors every autosave to
-`~/Library/Application Support/WiFiBillionaire/save.json` (restored on launch, so
-progress survives independently of WebKit storage), and bridges JS `alert`/`confirm`
-to native dialogs. The icon (`app/makeicon.swift`) is drawn programmatically with
-CoreGraphics/AppKit.
+> Legacy note: `app/main.swift` + `build.sh` (native Mac WKWebView shell) and
+> `build-win.sh` (manual Electron zip) are superseded by the electron-builder
+> pipeline above and kept only for reference.
+
+## How to play
 
 You don't control the character directly. You set their **focus** (code, make
 content, trade crypto, study, sleep, touch grass…), buy their gear, pick their
