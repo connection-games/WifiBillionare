@@ -162,6 +162,12 @@ WB.UI = (function () {
   }
   let settingsTab = "general";
   const UPDATES = [
+    { v: "v5.2 — The Underworld Update", items: [
+      "🦹 Crime tab redesigned: Underworld heat hero, scam feature card, risk-pill job grid.",
+      "😱 NEW: Scare meter in the Scam Sim — spook your mark for fear-payouts, but panic means police.",
+      "💬 Fixed: scam chats now finish properly with a result screen inside the phone.",
+      "✨ Popups rebuilt: glassy blur, springy animation, cleaner event/result/perk cards.",
+    ]},
     { v: "v5.1 — The Living Room Update", items: [
       "🏠 Living UI overhaul: new character status panel with live activity, mood and level.",
       "🚔 Prison takeover: get jailed and the whole room becomes a cell — bars, bunk, tally marks, cell number.",
@@ -592,36 +598,62 @@ WB.UI = (function () {
     return html;
   }
 
+  const crimeDescCache = {}; // fill() once per crime — random slot-fills would re-randomize every render
   function tabCrime() {
     const C = WB.CRIME, c = C.crimeState();
-    const heatPct = Math.round(c.heat);
+    const heat = Math.round(c.heat);
     const jailed = C.inPrison();
-    let html = `<div class="section-title">🚨 The Underworld</div>
-      <div class="card col"><div class="card-main">
-        <b>🌡️ Heat</b> <span class="tag" style="color:${heatPct > 60 ? "var(--red)" : heatPct > 30 ? "var(--gold)" : "var(--green)"}">${heatPct}/100</span>
-        <div class="muted">Every crime raises heat; high heat = higher chance of getting caught. It cools off slowly over time.</div>
-        <div class="bar" style="margin-top:6px"><div class="fill stress" style="width:${heatPct}%"></div></div></div></div>`;
+    const hs = heat < 20 ? ["❄️", "Cold", "#34c759"] : heat < 45 ? ["🌤️", "Warm", "#ffd60a"] : heat < 70 ? ["🔥", "Hot", "#ff9f0a"] : ["🚨", "Blazing", "#ff453a"];
+
+    let html = `
+      <div class="crime-hero">
+        <div class="crime-hero-top"><b>🌆 The Underworld</b><span class="heat-chip" style="--hc:${hs[2]}">${hs[0]} ${hs[1]}</span></div>
+        <div class="heat-row"><span class="heat-num">${heat}</span><span class="heat-cap">/ 100 heat</span></div>
+        <div class="heat-bar"><div class="heat-fill" style="width:${heat}%"></div></div>
+        <div class="crime-hero-sub">Crimes raise heat · heat raises catch odds · time (or laundering) cools it down</div>
+      </div>`;
+
     if (jailed) {
-      html += `<div class="card col jail"><b>🚔 In Jail — ${WB.fmtTime(C.prisonLeft() / 1000)} left</b>
-        <div class="muted">Reason: ${c.prisonReason}. Manual actions are locked; income runs at 50%.</div>
-        <button class="btn danger wide" data-act="bail">Post Bail (${WB.fmt(C.bailCost(), true)})</button></div>`;
+      html += `
+        <div class="crime-jail">
+          <div class="crime-jail-top"><b>🚔 County Jail</b><span class="jail-clock">⏳ ${WB.fmtTime(C.prisonLeft() / 1000)}</span></div>
+          <div class="jail-stripes"></div>
+          <div class="crime-jail-sub">Booked for: ${c.prisonReason}. Actions are locked, income runs at 50%.</div>
+          <button class="btn danger wide" data-act="bail">⚖️ Post Bail — ${WB.fmt(C.bailCost(), true)}</button>
+        </div>`;
     }
-    // Featured: the texting scam
-    html += `<div class="section-title">📱 Phishing — Scam Texting</div>
-      <div class="card col"><div class="card-main"><b>💬 Open the Texting App</b>
-        <div class="muted">Chat up fictional victims, build their trust, and cash out. ${WB.aiEnabled() ? "AI-powered victims." : "Offline victims (add an OpenAI key in Settings for smart ones)."}</div></div>
-        <button class="btn buy wide ${jailed ? "locked" : ""}" data-act="openscam">📲 Launch Messages</button></div>`;
-    html += `<div class="section-title">🦹 Quick Jobs</div>`;
+
+    const avatars = (WB.SCAM ? WB.SCAM.VICTIMS : []).map(v => `<span title="${v.name}">${v.avatar}</span>`).join("");
+    html += `
+      <div class="crime-feature">
+        <div class="crime-feature-main">
+          <b>💬 Scam Sim — Texting</b>
+          <div class="crime-feature-sub">Chat up fictional marks, watch their scare meter, cash out before they snap.
+            ${WB.aiEnabled() ? "🟢 AI victims active." : "⚪ Offline victims — add an OpenAI key in Settings for smart ones."}</div>
+          <div class="victim-row">${avatars}</div>
+        </div>
+        <button class="btn primary ${jailed ? "locked" : ""}" data-act="openscam">Open<br>Messages</button>
+      </div>`;
+
+    html += `<div class="section-title">🦹 Quick Jobs</div><div class="crime-grid">`;
     C.CRIMES.forEach(cr => {
       const el = C.eligible(cr);
       const chance = cr.launder ? null : Math.round(C.catchChance(cr) * 100);
-      html += `<div class="card"><div class="card-main"><b>${cr.icon} ${cr.name}</b>
-        ${chance !== null ? `<span class="tag" style="color:${chance > 40 ? "var(--red)" : "var(--gold)"}">${chance}% caught risk</span>` : `<span class="tag">cools heat</span>`}
-        <div class="muted">${WB.THOUGHTS.fill(cr.desc)}${cr.sentence ? ` · jail ${WB.fmtTime(cr.sentence)}` : ""}</div></div>`;
-      if (el.ok) html += `<button class="btn buy ${jailed ? "locked" : ""}" data-act="crime" data-key="${cr.id}">${cr.launder ? "Launder" : "Commit"}</button>`;
-      else html += `<span class="tag">🔒 ${el.why}</span>`;
-      html += `</div>`;
+      const riskCol = chance === null ? "#34c759" : chance > 40 ? "#ff453a" : chance > 22 ? "#ff9f0a" : "#34c759";
+      if (!crimeDescCache[cr.id]) crimeDescCache[cr.id] = WB.THOUGHTS.fill(cr.desc);
+      html += `
+        <div class="crime-card ${el.ok ? "" : "locked"}">
+          <div class="crime-card-head"><span class="crime-ico">${cr.icon}</span>
+            <span class="risk-pill" style="--rp:${riskCol}">${chance === null ? "🧼 −heat" : chance + "% risk"}</span></div>
+          <b class="crime-name">${cr.name}</b>
+          <div class="crime-desc">${crimeDescCache[cr.id]}</div>
+          <div class="crime-meta">${cr.sentence ? `⛓️ ${WB.fmtTime(cr.sentence)} if caught` : "Washes your dirty reputation"}</div>
+          ${el.ok
+            ? `<button class="btn crime-btn ${jailed ? "locked" : ""}" data-act="crime" data-key="${cr.id}">${cr.launder ? "🧼 Launder" : "Commit"}</button>`
+            : `<div class="crime-lock">🔒 ${el.why}</div>`}
+        </div>`;
     });
+    html += `</div>`;
     return html;
   }
 
