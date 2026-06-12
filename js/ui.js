@@ -954,43 +954,128 @@ WB.UI = (function () {
   }
 
   // ============================================================ Actions bar
-  // Rebuild the DOM only when an action's STATE changes; progress % and
-  // countdown text are patched in place so hover styles never get destroyed
-  // mid-animation (the old full innerHTML swap made buttons flicker on hover).
-  let lastActionsSig = "";
-  function actionInfo({ id, def, st: a }) {
-    let sub = "", pct = 0;
-    if (a.state === "ready") sub = "Ready";
-    else if (a.state === "running") { sub = "Working… " + a.label; pct = a.pct; }
-    else if (a.state === "done") { sub = "📬 Check results!"; pct = 100; }
-    else if (a.state === "cooldown") sub = "Recharging " + a.label;
-    return { id, def, state: a.state, sub, pct };
+  // Always exactly FOUR category cards (💼 Work · 📣 Fame · 💸 Money · 🧘 Life)
+  // in a fixed-height grid — the bar never wraps or grows, so the character
+  // panel below it never moves. Each category opens a popover of its actions.
+  const CAT_ORDER = ["work", "fame", "money", "life"];
+  let actBarBuilt = false;
+  let actPanelCat = null, actPanelSig = "";
+
+  function catItems(cat) {
+    return WB.ACTIONS.list().filter(x => x.def.cat === cat);
   }
   function renderActions() {
-    if (!WB.ACTIONS) return;
-    const items = WB.ACTIONS.list().map(actionInfo);
-    const sig = items.map(i => i.id + ":" + i.state).join("|");
-    if (sig !== lastActionsSig) {
-      lastActionsSig = sig;
-      $("actions-bar").innerHTML = items.map(i =>
-        `<button class="action-card ${i.state}" data-action="${i.id}" title="${i.def.desc}">
-          <span class="action-icon">${i.def.icon}</span>
-          <span class="action-name">${i.def.name}</span>
-          <span class="action-sub">${i.sub}</span>
-          <span class="action-track"><span class="action-fill" style="width:${i.pct}%"></span></span>
-        </button>`).join("");
+    if (!WB.ACTIONS || !WB.ACTIONS.CATEGORIES) return;
+    const bar = $("actions-bar");
+    if (!actBarBuilt) {
+      actBarBuilt = true;
+      bar.innerHTML = CAT_ORDER.map(c => {
+        const def = WB.ACTIONS.CATEGORIES[c];
+        return `<button class="act-cat" data-cat="${c}" title="${WB.t(def.desc)}">
+          <span class="act-cat-icon">${def.icon}</span>
+          <span class="act-cat-main">
+            <span class="act-cat-name">${WB.t(def.name)}</span>
+            <span class="act-cat-sub" id="actsub-${c}"></span>
+          </span>
+          <span class="act-cat-chev">▾</span>
+          <span class="act-cat-track"><span class="act-cat-fill" id="actfill-${c}"></span></span>
+        </button>`;
+      }).join("");
+    }
+    CAT_ORDER.forEach(c => {
+      const items = catItems(c);
+      const done = items.filter(x => x.st.state === "done").length;
+      const running = items.filter(x => x.st.state === "running");
+      const ready = items.filter(x => x.st.state === "ready").length;
+      let state, sub, pct = 0;
+      if (done) { state = "done"; sub = WB.t("📬 Results ready!"); pct = 100; }
+      else if (running.length) {
+        state = "running";
+        const r = running.sort((a, b) => b.st.pct - a.st.pct)[0];
+        sub = (running.length > 1 ? running.length + " × " : "") + WB.t("working…") + " " + r.st.label;
+        pct = r.st.pct;
+      } else if (ready) { state = "ready"; sub = ready + " " + WB.t("ready"); }
+      else { state = "cooldown"; sub = WB.t("recharging…"); }
+      const card = bar.querySelector(`[data-cat="${c}"]`);
+      if (!card) return;
+      if (card.dataset.state !== state) { card.dataset.state = state; card.className = "act-cat " + state; }
+      const subEl = $("actsub-" + c);
+      if (subEl && subEl.textContent !== sub) subEl.textContent = sub;
+      const fill = $("actfill-" + c);
+      if (fill) fill.style.width = pct + "%";
+    });
+    if (actPanelCat) renderActPanel(); // live countdowns while the popover is open
+  }
+
+  // ---------- Category popover: the direct actions ----------
+  function rowInfo({ id, def, st: a }) {
+    let sub = def.desc, chip = "▶ " + WB.t("Start"), pct = 0;
+    if (a.state === "running") { sub = WB.t("working…"); chip = "⏳ " + a.label; pct = a.pct; }
+    else if (a.state === "done") { sub = WB.t("Results are in!"); chip = "📬 " + WB.t("Collect"); pct = 100; }
+    else if (a.state === "cooldown") { sub = WB.t("recharging…"); chip = "🕒 " + a.label; }
+    return { id, def, state: a.state, sub, chip, pct };
+  }
+  function renderActPanel() {
+    const p = $("act-panel");
+    if (!p || !actPanelCat) return;
+    const catDef = WB.ACTIONS.CATEGORIES[actPanelCat];
+    const items = catItems(actPanelCat).map(rowInfo);
+    const sig = actPanelCat + "|" + items.map(i => i.id + ":" + i.state).join("|");
+    if (sig !== actPanelSig) {
+      actPanelSig = sig;
+      p.innerHTML = `<div class="act-panel-head"><span>${catDef.icon}</span><b>${WB.t(catDef.name)}</b><small>${WB.t(catDef.desc)}</small></div>` +
+        items.map(i => `
+          <button class="act-row ${i.state}" data-action="${i.id}">
+            <span class="act-row-icon">${i.def.icon}</span>
+            <span class="act-row-main">
+              <b>${WB.t(i.def.name)}</b>
+              <small id="arsub-${i.id}">${i.sub}</small>
+            </span>
+            <span class="act-row-chip" id="archip-${i.id}">${i.chip}</span>
+            <span class="act-row-track"><span class="act-row-fill" id="arfill-${i.id}" style="width:${i.pct}%"></span></span>
+          </button>`).join("");
       return;
     }
-    // same structure — patch text/progress without touching the DOM tree
-    const cards = $("actions-bar").children;
-    items.forEach((i, idx) => {
-      const card = cards[idx];
-      if (!card) return;
-      const sub = card.querySelector(".action-sub");
-      const fill = card.querySelector(".action-fill");
+    items.forEach(i => { // patch countdowns in place — no hover flicker
+      const chip = $("archip-" + i.id), sub = $("arsub-" + i.id), fill = $("arfill-" + i.id);
+      if (chip && chip.textContent !== i.chip) chip.textContent = i.chip;
       if (sub && sub.textContent !== i.sub) sub.textContent = i.sub;
       if (fill) fill.style.width = i.pct + "%";
     });
+  }
+  function toggleActPanel(cat, anchor) {
+    if (actPanelCat === cat) return closeActPanel();
+    actPanelCat = cat;
+    actPanelSig = "";
+    let p = $("act-panel");
+    if (!p) {
+      p = document.createElement("div");
+      p.id = "act-panel";
+      document.body.appendChild(p);
+      p.addEventListener("click", e => {
+        e.stopPropagation();
+        const row = e.target.closest("[data-action]");
+        if (!row) return;
+        const id = row.dataset.action;
+        const a = WB.ACTIONS.status(id);
+        if (a.state === "cooldown" || a.state === "running") return; // chip shows the countdown
+        closeActPanel();
+        onActionClick(id);
+      });
+    }
+    renderActPanel();
+    // anchor the popover above its category card
+    const r = anchor.getBoundingClientRect();
+    p.classList.add("open");
+    const pw = p.offsetWidth || 340;
+    p.style.left = Math.min(Math.max(12, r.left + r.width / 2 - pw / 2), innerWidth - pw - 12) + "px";
+    p.style.top = "";
+    p.style.bottom = (innerHeight - r.top + 10) + "px";
+  }
+  function closeActPanel() {
+    actPanelCat = null;
+    const p = $("act-panel");
+    if (p) p.classList.remove("open");
   }
 
   function showActionResult(result) {
@@ -1148,7 +1233,7 @@ WB.UI = (function () {
     $("notif-btn").addEventListener("click", e => { e.stopPropagation(); toggleNotifPanel(); });
     $("notif-clear").addEventListener("click", () => { notifs = []; saveNotifs(); renderNotifPanel(); renderNotifBadge(); });
     $("notif-panel").addEventListener("click", e => e.stopPropagation());
-    document.addEventListener("click", () => toggleNotifPanel(false));
+    document.addEventListener("click", () => { toggleNotifPanel(false); closeActPanel(); });
     renderNotifBadge();
 
     // pause periodic side-panel refreshes while hovering (prevents button flicker)
@@ -1161,10 +1246,12 @@ WB.UI = (function () {
     $("scam-close").addEventListener("click", () => WB.SCAM.close());
     $("scam-back").addEventListener("click", () => WB.SCAM.open());
 
-    // Game init
+    // Action categories: cards open a popover of direct actions
     $("actions-bar").addEventListener("click", e => {
-      const b = e.target.closest(".action-card");
-      if (b) onActionClick(b.dataset.action);
+      const b = e.target.closest(".act-cat");
+      if (!b) return;
+      e.stopPropagation();
+      toggleActPanel(b.dataset.cat, b);
     });
 
     const hooks = { toast, bubble, showEventModal, offerPerks, notifyAchievement, confetti, roomDirty: () => {}, modalOpen: uiBusy };

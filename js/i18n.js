@@ -95,6 +95,15 @@ WB.I18N = (function () {
     "Applies instantly — switch any time.": "Gäller direkt — byt när du vill.",
     // empire
     "Empire": "Imperium",
+    // action categories (v6.1)
+    "Work": "Jobb", "Fame": "Kändis", "Money": "Pengar", "Life": "Livet",
+    "Sprints, gigs, jams — make stuff, get paid.": "Sprintar, gig, jams — bygg saker, få betalt.",
+    "Videos, streams, hot takes — grow the audience.": "Videor, streams, heta åsikter — väx publiken.",
+    "Flips, drops, market plays — pure profit moves.": "Flippar, släpp, marknadsdrag — rena vinstdrag.",
+    "Coffee, naps, showers — keep the human running.": "Kaffe, tupplurar, duschar — håll människan igång.",
+    "📬 Results ready!": "📬 Resultat klara!",
+    "working…": "jobbar…", "ready": "redo", "recharging…": "laddar om…",
+    "Start": "Starta", "Collect": "Hämta", "Results are in!": "Resultaten är här!",
     // hygiene & bathroom
     "🧼 Hygiene": "🧼 Hygien", "Bathroom Break": "Toalettpaus", "very important business": "mycket viktiga affärer",
     // easter egg
