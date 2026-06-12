@@ -130,9 +130,15 @@ WB.GAME = (function () {
     });
     return total;
   }
+  // game mode: 'speedrun' (picked in the main menu) runs the whole sim ~3x faster
+  function speedMult() {
+    try { return localStorage.getItem("wb_mode") === "speedrun" ? 3 : 1; } catch (e) { return 1; }
+  }
+
   function incomePerSec() {
     if (!s) return 0;
     let inc = careerBaseIncome();
+    inc *= speedMult();
     inc *= D.HOUSING[s.housing].mult;
     inc *= equipIncomeMult();
     inc *= D.ERAS[s.era].mult;
@@ -183,7 +189,7 @@ WB.GAME = (function () {
   function gainXp(skillKey, amount) {
     const sk = s.skills[skillKey];
     if (!sk || sk.level >= 100) return;
-    sk.xp += amount * xpMult();
+    sk.xp += amount * xpMult() * speedMult();
     while (sk.level < 100 && sk.xp >= xpForLevel(sk.level)) {
       sk.xp -= xpForLevel(sk.level);
       sk.level++;
@@ -657,7 +663,7 @@ WB.GAME = (function () {
     // Events
     if (now >= s.nextEventAt && !UI.modalOpen()) {
       fireEvent();
-      s.nextEventAt = now + (40 + Math.random() * 55) * 1000;
+      s.nextEventAt = now + (40 + Math.random() * 55) * 1000 / (speedMult() > 1 ? 2 : 1);
     }
 
     // Era / traits / goals

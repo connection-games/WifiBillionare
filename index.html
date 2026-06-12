@@ -24,7 +24,7 @@
       <button id="settings-btn" title="Settings">⚙️</button>
     </header>
 
-    <div id="goal-banner">🎯 <b>Goal:</b>&nbsp;<span id="goal-text">Earn your first $10</span></div>
+    <div id="goal-banner">🎯 <b data-i18n="Goal:">Goal:</b>&nbsp;<span id="goal-text">Earn your first $10</span></div>
 
     <main id="main">
 
@@ -43,11 +43,10 @@
 
         <div id="controls">
           <div id="activities"></div>
-          <button id="hustle-btn">HUSTLE 💪<span id="hustle-val">+$1</span></button>
+          <button id="hustle-btn"><span data-i18n="HUSTLE 💪">HUSTLE 💪</span><span id="hustle-val">+$1</span></button>
         </div>
 
         <div id="char-panel">
-          <div id="char-bars" aria-hidden="true"></div>
           <div id="char-head">
             <div id="char-status">
               <span id="status-icon">💻</span>
@@ -64,26 +63,26 @@
           </div>
           <div id="char-meters">
             <div class="meter">
-              <div class="meter-label"><span>⚡ Energy</span><b id="energy-txt">100</b></div>
+              <div class="meter-label"><span data-i18n="⚡ Energy">⚡ Energy</span><b id="energy-txt">100</b></div>
               <div class="bar"><div class="fill energy" id="energy-fill" style="width:100%"></div></div>
             </div>
             <div class="meter">
-              <div class="meter-label"><span>😊 Happiness</span><b id="happiness-txt">60</b></div>
+              <div class="meter-label"><span data-i18n="😊 Happiness">😊 Happiness</span><b id="happiness-txt">60</b></div>
               <div class="bar"><div class="fill happiness" id="happiness-fill" style="width:60%"></div></div>
             </div>
             <div class="meter">
-              <div class="meter-label"><span>🔥 Motivation</span><b id="motivation-txt">75</b></div>
+              <div class="meter-label"><span data-i18n="🔥 Motivation">🔥 Motivation</span><b id="motivation-txt">75</b></div>
               <div class="bar"><div class="fill motivation" id="motivation-fill" style="width:75%"></div></div>
             </div>
             <div class="meter">
-              <div class="meter-label"><span>🫠 Stress</span><b id="stress-txt">0</b></div>
+              <div class="meter-label"><span data-i18n="🫠 Stress">🫠 Stress</span><b id="stress-txt">0</b></div>
               <div class="bar"><div class="fill stress" id="stress-fill" style="width:0%"></div></div>
             </div>
           </div>
           <div id="char-chips">
-            <span class="cchip">🌟 Reputation <b id="rep-val">0</b></span>
-            <span class="cchip">🧠 Intelligence <b id="int-val">10</b></span>
-            <span class="cchip">📱 Fans <b id="followers-val">0</b></span>
+            <span class="cchip"><span data-i18n="🌟 Reputation">🌟 Reputation</span> <b id="rep-val">0</b></span>
+            <span class="cchip"><span data-i18n="🧠 Intelligence">🧠 Intelligence</span> <b id="int-val">10</b></span>
+            <span class="cchip"><span data-i18n="📱 Fans">📱 Fans</span> <b id="followers-val">0</b></span>
           </div>
         </div>
       </section>
@@ -98,7 +97,7 @@
 
   <div id="toasts"></div>
   <div id="notif-panel">
-    <div class="notif-head"><b>🔔 Notifications</b><button class="btn subtle" id="notif-clear">Clear all</button></div>
+    <div class="notif-head"><b data-i18n="Notifications">🔔 Notifications</b><button class="btn subtle" id="notif-clear" data-i18n="Clear all">Clear all</button></div>
     <div class="notif-list" id="notif-list"></div>
   </div>
   <div id="modal-overlay"><div id="modal-content"></div></div>
@@ -125,32 +124,58 @@
       <div class="login-orb orb-b"></div>
       <div class="login-orb orb-c"></div>
     </div>
-    <div class="login-card">
+    <div class="login-card menu-card">
       <div class="login-eyebrow"><i></i><span>Connection&nbsp;Games</span><i></i></div>
-      <div class="login-logo">
-        <svg viewBox="0 0 96 76" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <path class="wf wf-3" d="M8 28C19 17 33 11 48 11s29 6 40 17" stroke="currentColor" stroke-width="7" stroke-linecap="round"/>
-          <path class="wf wf-2" d="M21 41c7.4-7.4 16.8-11.5 27-11.5S67.6 33.6 75 41" stroke="currentColor" stroke-width="7" stroke-linecap="round"/>
-          <path class="wf wf-1" d="M34 53.5c3.9-3.9 8.8-6 14-6s10.1 2.1 14 6" stroke="currentColor" stroke-width="7" stroke-linecap="round"/>
-          <circle class="wf wf-0" cx="48" cy="65" r="5.5" fill="currentColor"/>
+      <div class="login-logo logo-tile">
+        <svg viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <linearGradient id="lgbg" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0" stop-color="#1a2b54"/><stop offset="1" stop-color="#0a0f21"/>
+            </linearGradient>
+          </defs>
+          <rect x="6" y="6" width="108" height="108" rx="28" fill="url(#lgbg)" stroke="rgba(255,255,255,0.14)" stroke-width="1.5"/>
+          <path class="wf wf-3" d="M28 56c9-9 20-13.5 32-13.5S83 47 92 56" stroke="#4dde80" stroke-width="8" stroke-linecap="round" fill="none"/>
+          <path class="wf wf-2" d="M38 68c6-6 13.5-9 22-9s16 3 22 9" stroke="#4dde80" stroke-width="8" stroke-linecap="round" fill="none"/>
+          <circle class="wf wf-0" cx="60" cy="86" r="11" fill="#ffc83d"/>
+          <text x="60" y="91" text-anchor="middle" font-size="15" font-weight="800" fill="#5a3804" font-family="-apple-system,sans-serif">$</text>
         </svg>
       </div>
       <h1 class="login-title">WiFi <span>Billionaire</span></h1>
-      <div class="login-tag">From a mattress to a market cap</div>
-      <div class="disclaimer">
-        <div class="disc-head">⚠️ Disclaimer — please read</div>
+      <div class="login-tag" data-i18n="From a mattress to a market cap">From a mattress to a market cap</div>
+
+      <div class="menu-buttons">
+        <button class="menu-btn" id="mode-casual" data-mode="casual">
+          <span class="mb-ico">🌱</span>
+          <span class="mb-text"><b data-i18n="Casual Mode">Casual Mode</b><small data-i18n="Relaxed pacing">Relaxed pacing</small></span>
+          <span class="mb-go">›</span>
+        </button>
+        <button class="menu-btn speed" id="mode-speedrun" data-mode="speedrun">
+          <span class="mb-ico">⚡</span>
+          <span class="mb-text"><b data-i18n="Speedrun Mode">Speedrun Mode</b><small data-i18n="Everything ×3 faster">Everything ×3 faster</small></span>
+          <span class="mb-go">›</span>
+        </button>
+        <button class="menu-btn" id="mode-settings">
+          <span class="mb-ico">⚙️</span>
+          <span class="mb-text"><b data-i18n="Settings">Settings</b></span>
+          <span class="mb-go">›</span>
+        </button>
+      </div>
+      <div id="mode-info" class="mode-info" data-i18n="Pick a mode to start">Pick a mode to start</div>
+
+      <details class="disclaimer mini">
+        <summary class="disc-head">⚠️ Disclaimer</summary>
         <p>WiFi Billionaire is a work of <b>satire and fiction</b>, made purely for comedy and entertainment.</p>
         <p>The “Scam Sim” mode is an over-the-top <b>parody</b>. All “victims” are fictional AI characters. It does <b>not</b> teach, encourage, or endorse real fraud, scams, or any illegal activity. Doing these things in real life is harmful and a crime.</p>
         <p>All money, crimes, and consequences exist only inside this game. Be a good human out there. 💙</p>
-      </div>
-      <button id="play-btn" class="login-play"><span>Play</span></button>
-      <div class="login-foot"><span id="login-ver"></span>© 2026 Connection Games · For entertainment only</div>
+      </details>
+      <div class="login-foot"><span id="login-ver"></span><span data-i18n="© 2026 Connection Games · For entertainment only">© 2026 Connection Games · For entertainment only</span></div>
     </div>
   </div>
 
   <script src="js/desktop.js"></script>
   <script src="js/secrets.js"></script>
   <script src="js/data.js"></script>
+  <script src="js/i18n.js"></script>
   <script src="js/thoughts.js"></script>
   <script src="js/events.js"></script>
   <script src="js/achievements.js"></script>
@@ -163,10 +188,41 @@
   <script src="js/ui.js"></script>
   <script>
     (function () {
+      const t = (window.WB && WB.t) || (s => s);
       const sp = document.getElementById('splash');
-      const play = document.getElementById('play-btn');
+      const info = document.getElementById('mode-info');
+      const INFO = {
+        casual: ["CASUAL — the classic experience.", "Normal pacing, no time pressure. Build your empire one ramen at a time. Perfect for long idle sessions."],
+        speedrun: ["SPEEDRUN — for optimizers.", "Income, XP and actions run ~3× faster and events come more often. Reach a billion fast — but chaos comes fast too."],
+        settings: ["⚙️", "Audio, language, gameplay and data options. Opens after you enter the game."],
+      };
+      const setInfo = (k) => {
+        if (!k) { info.classList.remove('show'); return; }
+        info.innerHTML = `<b>${t(INFO[k][0])}</b> ${t(INFO[k][1])}`;
+        info.classList.add('show');
+      };
       const dismiss = () => { sp.classList.add('out'); setTimeout(() => sp.remove(), 700); };
-      play.addEventListener('click', dismiss);
+      const start = (mode) => { try { localStorage.setItem('wb_mode', mode); } catch (e) {} dismiss(); };
+      document.getElementById('mode-casual').addEventListener('click', () => start('casual'));
+      document.getElementById('mode-speedrun').addEventListener('click', () => start('speedrun'));
+      document.getElementById('mode-settings').addEventListener('click', () => {
+        dismiss();
+        setTimeout(() => { if (WB.UI && WB.UI.showSettings) WB.UI.showSettings(); }, 750);
+      });
+      ['casual', 'speedrun'].forEach(k => {
+        const b = document.getElementById('mode-' + k);
+        b.addEventListener('mouseenter', () => setInfo(k));
+        b.addEventListener('mouseleave', () => setInfo(null));
+      });
+      const s2 = document.getElementById('mode-settings');
+      s2.addEventListener('mouseenter', () => setInfo('settings'));
+      s2.addEventListener('mouseleave', () => setInfo(null));
+      // returning players: relabel casual as Continue
+      try {
+        if (localStorage.getItem('wifi_billionaire_save_v1')) {
+          document.querySelector('#mode-casual b').textContent = t('▶ Continue');
+        }
+      } catch (e) {}
       const v = (window.wbDesktop && window.wbDesktop.version) || '';
       if (v) document.getElementById('login-ver').textContent = 'v' + v + ' · ';
     })();

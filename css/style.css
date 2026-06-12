@@ -219,14 +219,8 @@ b { font-weight: 600; }
 }
 .cchip b { color: var(--text); }
 
-/* prison bars overlay (hidden unless jailed) */
-#char-bars {
-  position: absolute; inset: 0; pointer-events: none; opacity: 0; z-index: 3;
-  background: repeating-linear-gradient(90deg, rgba(12, 13, 16, 0.55) 0 7px, transparent 7px 64px);
-  transition: opacity 0.5s ease;
-}
+/* (prison bars stay on the room only — the stats panel goes stone-dark instead) */
 #char-panel.jailed { background: linear-gradient(180deg, #3a3d43, #2e3035); border-color: #54575e; }
-#char-panel.jailed #char-bars { opacity: 1; }
 #char-panel.jailed .meter-label, #char-panel.jailed .cchip, #char-panel.jailed #status-sub { color: #b9bdc6; }
 #char-panel.jailed .meter-label b, #char-panel.jailed .cchip b, #char-panel.jailed .status-text b { color: #f3f4f7; }
 #char-panel.jailed #status-icon { background: #25272b; border-color: #55585e; }
@@ -1032,3 +1026,104 @@ html[data-theme="dark"] .crime-btn:hover { background: rgba(41, 151, 255, 0.24);
 .perk-card:hover { transform: translateY(-4px) scale(1.02); box-shadow: 0 14px 34px rgba(0, 113, 227, 0.18); }
 .perk-icon { font-size: 34px; }
 .toast { border-radius: 15px; padding: 12px 16px; }
+
+/* ================= v5.3: main menu, tutorial 2.0, jail polish, layout cleanup ================= */
+
+/* ---------- Main menu ---------- */
+.menu-card { max-width: 500px; padding-bottom: 24px; }
+.logo-tile { width: 96px; filter: drop-shadow(0 14px 30px rgba(10, 132, 255, 0.35)); }
+.logo-tile .wf { animation: wfsignal 2.6s ease-in-out infinite; }
+.menu-buttons { display: flex; flex-direction: column; gap: 10px; margin-top: 24px; }
+.menu-btn {
+  display: flex; align-items: center; gap: 14px; width: 100%; text-align: left;
+  background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 16px; padding: 13px 18px; cursor: pointer; color: #f2f5fb; font-family: inherit;
+  transition: transform 0.16s ease, border-color 0.16s, background 0.16s, box-shadow 0.16s;
+}
+.menu-btn:hover {
+  transform: translateY(-2px); background: rgba(56, 130, 248, 0.13);
+  border-color: rgba(56, 150, 248, 0.55); box-shadow: 0 12px 30px rgba(10, 132, 255, 0.25);
+}
+.menu-btn.speed:hover { background: rgba(255, 184, 48, 0.12); border-color: rgba(255, 184, 48, 0.55); box-shadow: 0 12px 30px rgba(255, 159, 10, 0.22); }
+.menu-btn:active { transform: translateY(0) scale(0.985); }
+.mb-ico { font-size: 22px; width: 38px; height: 38px; display: flex; align-items: center; justify-content: center; background: rgba(255, 255, 255, 0.07); border-radius: 12px; flex-shrink: 0; }
+.mb-text { flex: 1; display: flex; flex-direction: column; gap: 1px; }
+.mb-text b { font-size: 15px; letter-spacing: -0.2px; }
+.mb-text small { font-size: 11px; color: #93a0b8; }
+.mb-go { color: #5f6878; font-size: 20px; transition: transform 0.16s, color 0.16s; }
+.menu-btn:hover .mb-go { transform: translateX(4px); color: #cfe0ff; }
+.mode-info {
+  min-height: 44px; margin-top: 14px; padding: 10px 14px; border-radius: 12px;
+  background: rgba(255, 255, 255, 0.04); border: 1px dashed rgba(255, 255, 255, 0.12);
+  color: #93a0b8; font-size: 11.5px; line-height: 1.5; text-align: left;
+  opacity: 0.75; transition: opacity 0.25s, border-color 0.25s;
+}
+.mode-info.show { opacity: 1; border-color: rgba(56, 150, 248, 0.4); color: #c4cfdf; }
+.mode-info b { color: #eaf1fb; }
+.disclaimer.mini { margin: 16px 0 0; padding: 10px 14px; max-height: none; }
+.disclaimer.mini summary { cursor: pointer; list-style: none; }
+.disclaimer.mini summary::-webkit-details-marker { display: none; }
+.disclaimer.mini p { margin-top: 8px; }
+
+/* ---------- Tutorial 2.0: spotlight + floating card ---------- */
+#tut-spot {
+  position: fixed; z-index: 290; pointer-events: none; border-radius: 18px;
+  box-shadow: 0 0 0 9999px rgba(8, 10, 16, 0.55), 0 0 0 3px var(--accent), 0 0 30px rgba(0, 113, 227, 0.55);
+  transition: all 0.5s cubic-bezier(0.22, 1, 0.36, 1);
+  animation: spotpulse 1.6s ease-in-out infinite;
+}
+@keyframes spotpulse { 50% { box-shadow: 0 0 0 9999px rgba(8, 10, 16, 0.55), 0 0 0 6px rgba(0, 113, 227, 0.55), 0 0 36px rgba(0, 113, 227, 0.65); } }
+#tut-box {
+  position: fixed; z-index: 295; width: 390px; max-width: 94vw;
+  background: var(--panel); border: 1px solid var(--border-soft); border-radius: 20px;
+  padding: 18px 20px 16px; box-shadow: var(--shadow-lg);
+  transition: left 0.5s cubic-bezier(0.22, 1, 0.36, 1), top 0.5s cubic-bezier(0.22, 1, 0.36, 1);
+}
+#tut-box.tutpop { animation: tutpop 0.45s cubic-bezier(0.18, 1.3, 0.4, 1); }
+@keyframes tutpop { from { transform: scale(0.92) translateY(10px); opacity: 0; } }
+.tut-head { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+.tut-ico {
+  width: 38px; height: 38px; font-size: 19px; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  background: var(--accent-tint); border-radius: 12px;
+}
+.tut-head h3 { flex: 1; font-size: 15.5px; letter-spacing: -0.2px; }
+.tut-step { font-size: 10.5px; font-weight: 800; color: var(--muted); background: var(--panel2); padding: 3px 9px; border-radius: 999px; }
+#tut-box p { font-size: 13px; color: var(--muted); line-height: 1.55; margin-bottom: 13px; }
+.tut-dots { display: flex; gap: 5px; align-items: center; }
+.tut-dots i { width: 6px; height: 6px; border-radius: 50%; background: var(--border); transition: all 0.3s; }
+.tut-dots i.on { background: var(--accent); width: 16px; border-radius: 999px; }
+
+/* ---------- Jail polish: bars only on the room, slick banner ---------- */
+#room-wrap.jailed::after {
+  background: repeating-linear-gradient(90deg, rgba(8, 9, 11, 0.7) 0 9px, transparent 9px 84px);
+  box-shadow: inset 0 12px 26px rgba(0, 0, 0, 0.45);
+}
+#prison-banner {
+  position: absolute; top: 12px; right: 14px; left: auto; transform: none; z-index: 8;
+  display: flex; align-items: center; gap: 10px;
+  background: rgba(16, 17, 21, 0.82); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 214, 10, 0.4); color: #ffd60a;
+  padding: 6px 7px 6px 14px; border-radius: 999px;
+  font-size: 12.5px; font-weight: 800; font-variant-numeric: tabular-nums;
+  box-shadow: 0 10px 26px rgba(0, 0, 0, 0.45);
+  animation: fadein 0.4s ease;
+}
+#prison-banner button {
+  background: linear-gradient(180deg, #ffe066, #ffc83d); color: #4a3404;
+  border: none; border-radius: 999px; padding: 6px 14px; cursor: pointer;
+  font-family: inherit; font-size: 11.5px; font-weight: 800;
+  transition: transform 0.12s, filter 0.15s;
+}
+#prison-banner button:hover { transform: translateY(-1px); filter: brightness(1.05); }
+#prison-banner button:active { transform: scale(0.96); }
+
+/* ---------- Layout cleanup: calmer chrome, more air ---------- */
+#goal-banner { padding: 7px 22px; font-size: 12.5px; }
+#scene { gap: 10px; }
+#char-panel { gap: 9px; }
+.card { box-shadow: none; }
+.card:hover { box-shadow: var(--shadow-sm); }
+.action-card { box-shadow: none; }
+#topbar { gap: 14px; }
+@media (max-width: 1280px) { #era-badge { display: none; } }

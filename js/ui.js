@@ -116,6 +116,7 @@ WB.UI = (function () {
   function openModal(html) {
     modalIsOpen = true;
     $("modal-content").innerHTML = html;
+    WB.I18N.translateDom($("modal-content"));
     $("modal-overlay").classList.add("open");
   }
   function closeModal() {
@@ -140,7 +141,8 @@ WB.UI = (function () {
     });
   }
   function offerPerks(perks) {
-    if (scamOpen()) { setTimeout(() => offerPerks(perks), 2500); return; } // wait until the texting app closes
+    // wait while the texting app or the tutorial is up — never stack popups
+    if (scamOpen() || tutStep >= 0) { setTimeout(() => offerPerks(perks), 2500); return; }
     openModal(`
       <h2>✨ Level Up — Choose a Perk</h2>
       <p class="muted">Pick one. The other two are lost to the multiverse.</p>
@@ -162,6 +164,14 @@ WB.UI = (function () {
   }
   let settingsTab = "general";
   const UPDATES = [
+    { v: "v5.3 — The Menu Update", items: [
+      "🎮 NEW: Main menu with Casual and Speedrun modes (speedrun = ~3× faster everything).",
+      "🇸🇪 NEW: Swedish language in Settings → General, with SEK currency.",
+      "🧑‍🏫 Tutorial rebuilt: animated spotlight, floating step cards, click-here guidance.",
+      "🚔 Jail polish: bars off the status panel, sleek countdown pill, smooth bail button.",
+      "🤖 A little surprise for autoclicker users…",
+      "🧹 Cleaner layout: calmer shadows, more air, less visual noise.",
+    ]},
     { v: "v5.2 — The Underworld Update", items: [
       "🦹 Crime tab redesigned: Underworld heat hero, scam feature card, risk-pill job grid.",
       "😱 NEW: Scare meter in the Scam Sim — spook your mark for fear-payouts, but panic means police.",
@@ -232,6 +242,13 @@ WB.UI = (function () {
         <button class="btn danger wide" id="set-reset">Hard Reset (delete everything)</button>`;
     }
     // general
+    const curLang = WB.I18N.lang();
+    const langSec = `<label class="set-label">${WB.t("🌍 Language")}</label>
+      <select class="set-input" id="lang-sel">
+        <option value="en" ${curLang === "en" ? "selected" : ""}>English</option>
+        <option value="sv" ${curLang === "sv" ? "selected" : ""}>Svenska 🇸🇪 (SEK)</option>
+      </select>
+      <div class="muted" style="text-align:left;margin:6px 2px 14px">${WB.t("Choose your language. Swedish switches money to SEK.")}</div>`;
     const toggles = [
       ["sorko", "🦈 Sorko Mode", "Your #1 superfan haunts the Socials feed. Essential."],
       ["confetti", "🎉 Confetti", "Celebrate milestones with falling confetti."],
@@ -239,18 +256,19 @@ WB.UI = (function () {
       ["showHeat", "🌡️ Show Heat Meter", "Display the crime heat indicator in the HUD."],
       ["autosaveToast", "💾 Autosave Notices", "Pop a tiny toast every time the game saves."],
     ];
-    return `<div class="toggle-list">${toggles.map(([k, label, desc]) =>
-      `<div class="toggle-row"><div><b>${label}</b><div class="muted">${desc}</div></div>
+    return langSec + `<div class="toggle-list">${toggles.map(([k, label, desc]) =>
+      `<div class="toggle-row"><div><b>${WB.t(label)}</b><div class="muted">${WB.t(desc)}</div></div>
         <button class="switch ${getSetting(k) ? "on" : ""}" data-toggle="${k}"><span></span></button></div>`).join("")}</div>`;
   }
   function showSettings() {
     const tabs = { general: "⚙️ General", ai: "🤖 AI", data: "💾 Data", updates: "✨ Updates", about: "ℹ️ About" };
     openModal(`<h2>Settings</h2>
-      <div class="set-tabs">${Object.entries(tabs).map(([k, l]) => `<button class="set-tab ${settingsTab === k ? "active" : ""}" data-settab="${k}">${l}</button>`).join("")}</div>
+      <div class="set-tabs">${Object.entries(tabs).map(([k, l]) => `<button class="set-tab ${settingsTab === k ? "active" : ""}" data-settab="${k}">${WB.t(l)}</button>`).join("")}</div>
       <div id="set-body">${settingsBody()}</div>
       <button class="btn primary wide" id="set-close" style="margin-top:14px">Close</button>`);
     const rebind = () => { $("set-body").innerHTML = settingsBody(); bindBody(); };
     function bindBody() {
+      if ($("lang-sel")) $("lang-sel").onchange = () => { WB.I18N.setLang($("lang-sel").value); location.reload(); };
       $("set-body").querySelectorAll("[data-toggle]").forEach(b => b.onclick = () => {
         const k = b.dataset.toggle; setSetting(k, !getSetting(k)); b.classList.toggle("on"); renderTab(true);
       });
@@ -273,45 +291,49 @@ WB.UI = (function () {
     $("set-close").onclick = closeModal;
   }
 
-  // ============================================================ Tutorial (first launch)
+  // ============================================================ Tutorial (spotlight redesign)
   const TUT_STEPS = [
-    { target: null, title: "📶 Welcome to WiFi Billionaire", text: "Meet your entrepreneur. He lives in his parents' bedroom, owns one sad laptop, and dreams in dollar signs. You don't control him — you manage him. He'll work, think out loud, and occasionally make questionable decisions." },
-    { target: "hustle-btn", title: "💪 The Hustle Button", text: "Smash this for instant cash. It's small money, but in the beginning every dollar is a victory. Your clicks get stronger as your income grows." },
-    { target: "activities", title: "🎯 Set His Focus", text: "Choose what he works on: code, content, crypto, games... He earns more from whatever he's focused on, and gains skill XP doing it. Don't forget Sleep and Touch Grass — burnout is real." },
-    { target: "actions-bar", title: "⚡ Actions", text: "The fun part. Take freelance gigs, run code sprints, post videos — each one runs for a bit, then shows you results. Watch for the glowing '📬 Check results!' cards." },
-    { target: "side", title: "🛒 Spend It Wisely", text: "Buy equipment and bigger homes in the Store, hire staff and buy a yacht in Assets, climb 5 career paths in Careers. Everything you buy appears in the room." },
-    { target: "goal-banner", title: "🎯 Follow the Goals", text: "The goal bar always shows your next milestone. Random events will pop up and demand decisions — choose wisely, or at least entertainingly. Now go: from this bedroom to a billion. 📈" },
+    { target: "room-wrap",   icon: "📶", title: "Meet your entrepreneur", text: "He lives in his parents' bedroom and dreams in dollar signs. You don't control him — you manage him." },
+    { target: "hustle-btn",  icon: "💪", title: "The Hustle button", text: "Smash it for instant cash. Clicks get stronger as your income grows." },
+    { target: "activities",  icon: "🎯", title: "Set his focus", text: "Pick what he works on. He earns more and gains XP in whatever you choose. Sleep is not optional." },
+    { target: "actions-bar", icon: "⚡", title: "Run actions", text: "Freelance gigs, code sprints, videos — start one, collect the results when it glows." },
+    { target: "side",        icon: "🛒", title: "Spend it wisely", text: "Gear, homes, careers, crime. Everything you buy shows up in the room." },
+    { target: "goal-banner", icon: "🎯", title: "Follow the goal", text: "The goal bar always shows your next milestone. Now go — from this bedroom to a billion. 📈" },
   ];
   let tutStep = -1;
-  function tutHalo(on) {
-    document.querySelectorAll(".tut-halo").forEach(el => el.classList.remove("tut-halo"));
-    if (on) {
-      const el = $(on);
-      if (el) el.classList.add("tut-halo");
-    }
-  }
   function showTutStep(i) {
     tutStep = i;
     if (i >= TUT_STEPS.length) return endTutorial();
     const s2 = TUT_STEPS[i];
-    tutHalo(s2.target);
-    let box = $("tut-box");
-    if (!box) {
-      box = document.createElement("div");
-      box.id = "tut-box";
-      document.body.appendChild(box);
-    }
-    box.innerHTML = `<h3>${s2.title}</h3><p>${s2.text}</p>
-      <div class="tut-row"><button class="btn subtle" id="tut-skip">Skip tour</button>
-      <span class="tut-dots">${TUT_STEPS.map((_, j) => j === i ? "●" : "○").join(" ")}</span>
-      <button class="btn primary" id="tut-next">${i === TUT_STEPS.length - 1 ? "Let's go!" : "Next"}</button></div>`;
+    let spot = $("tut-spot"), card = $("tut-box");
+    if (!spot) { spot = document.createElement("div"); spot.id = "tut-spot"; document.body.appendChild(spot); }
+    if (!card) { card = document.createElement("div"); card.id = "tut-box"; document.body.appendChild(card); }
+    const el = s2.target && $(s2.target);
+    const r = el ? el.getBoundingClientRect()
+      : { left: innerWidth / 2 - 60, top: innerHeight / 2 - 60, width: 120, height: 120 };
+    const pad = 7;
+    spot.style.left = (r.left - pad) + "px";
+    spot.style.top = (r.top - pad) + "px";
+    spot.style.width = (r.width + pad * 2) + "px";
+    spot.style.height = (r.height + pad * 2) + "px";
+    card.innerHTML = `
+      <div class="tut-head"><span class="tut-ico">${s2.icon}</span><h3>${WB.t(s2.title)}</h3><span class="tut-step">${i + 1}/${TUT_STEPS.length}</span></div>
+      <p>${WB.t(s2.text)}</p>
+      <div class="tut-row">
+        <button class="btn subtle" id="tut-skip">${WB.t("Skip")}</button>
+        <span class="tut-dots">${TUT_STEPS.map((_, j) => `<i class="${j <= i ? "on" : ""}"></i>`).join("")}</span>
+        <button class="btn primary" id="tut-next">${i === TUT_STEPS.length - 1 ? WB.t("Let's go!") : WB.t("Next")}</button>
+      </div>`;
+    card.classList.remove("tutpop"); void card.offsetWidth; card.classList.add("tutpop");
+    const cw = 390, ch = 185;
+    const below = r.top + r.height + ch + 26 < innerHeight;
+    card.style.top = below ? (r.top + r.height + 16) + "px" : Math.max(12, r.top - ch - 16) + "px";
+    card.style.left = Math.min(Math.max(r.left + r.width / 2 - cw / 2, 14), innerWidth - cw - 14) + "px";
     $("tut-next").onclick = () => showTutStep(i + 1);
     $("tut-skip").onclick = endTutorial;
   }
   function endTutorial() {
-    tutHalo(null);
-    const box = $("tut-box");
-    if (box) box.remove();
+    ["tut-spot", "tut-box"].forEach(id => { const e = $(id); if (e) e.remove(); });
     tutStep = -1;
     st.tutorialDone = true;
     WB.GAME.save();
@@ -376,7 +398,7 @@ WB.UI = (function () {
   function subBar(tab) {
     if (!SUBTABS[tab]) return "";
     return `<div class="subtabs">${SUBTABS[tab].map(s =>
-      `<button class="subtab-btn ${sub[tab] === s ? "active" : ""}" data-sub="${s}">${SUB_LABEL[s]}</button>`).join("")}</div>`;
+      `<button class="subtab-btn ${sub[tab] === s ? "active" : ""}" data-sub="${s}">${WB.t(SUB_LABEL[s])}</button>`).join("")}</div>`;
   }
 
   function tabAssets() {
@@ -667,6 +689,7 @@ WB.UI = (function () {
     if (html !== lastTabHtml || force) {
       lastTabHtml = html;
       $("tab-content").innerHTML = html;
+      WB.I18N.translateDom($("tab-content"));
     }
   }
 
@@ -741,15 +764,15 @@ WB.UI = (function () {
     if (jailed) {
       const c = WB.CRIME.crimeState();
       $("status-icon").textContent = "🚔";
-      $("status-label").textContent = "In Prison";
-      $("status-sub").textContent = WB.fmtTime(WB.CRIME.prisonLeft() / 1000) + " left · " + (c.prisonReason || "crimes were committed");
-      $("housing-name").textContent = "🔒 County Jail · Cell " + cellNumber();
+      $("status-label").textContent = WB.t("In Prison");
+      $("status-sub").textContent = WB.fmtTime(WB.CRIME.prisonLeft() / 1000) + " " + WB.t("left") + " · " + (c.prisonReason || "");
+      $("housing-name").textContent = "🔒 " + WB.t("County Jail · Cell") + " " + cellNumber();
       return;
     }
     const [icon, label, sub2] = STATUS_BY_FOCUS[st.focus] || ["💼", "Hustling", "doing entrepreneur things"];
     $("status-icon").textContent = icon;
-    $("status-label").textContent = label;
-    $("status-sub").textContent = st.project ? `on "${st.project.name}" · ${sub2}` : sub2;
+    $("status-label").textContent = WB.t(label);
+    $("status-sub").textContent = st.project ? `"${st.project.name}" · ${WB.t(sub2)}` : WB.t(sub2);
     $("housing-name").textContent = D.HOUSING[st.housing].name;
   }
   function renderHud() {
@@ -778,7 +801,7 @@ WB.UI = (function () {
 
     // living character panel: status, mood, level, prison state
     renderStatus();
-    $("mood-badge").textContent = moodFace(r);
+    $("mood-badge").textContent = WB.t(moodFace(r));
     $("level-badge").textContent = "⭐ Lv " + G.charLevel();
 
     // Goal
@@ -921,17 +944,17 @@ WB.UI = (function () {
   function renderPrisonBanner() {
     const jailed = WB.CRIME && WB.CRIME.inPrison();
     let b = $("prison-banner");
-    if (!jailed) { if (b) b.style.display = "none"; return; }
-    if (!b) {
+    if (!jailed) { if (b) b.remove(); return; }
+    if (!b) { // built once; only the text nodes update, so the button never flickers
       b = document.createElement("div");
       b.id = "prison-banner";
-      $("scene").appendChild(b);
+      b.innerHTML = `<span id="prison-count"></span><button id="prison-bail"></button>`;
+      $("room-wrap").appendChild(b);
+      $("prison-bail").onclick = () => WB.CRIME.postBail();
     }
-    b.style.display = "";
-    const c = WB.CRIME.crimeState();
-    b.innerHTML = `🚔 <b>JAILED</b> — ${WB.fmtTime(WB.CRIME.prisonLeft() / 1000)} left · ${c.prisonReason}
-      <button class="btn small danger" id="prison-bail">Bail ${WB.fmt(WB.CRIME.bailCost(), true)}</button>`;
-    $("prison-bail").onclick = () => WB.CRIME.postBail();
+    $("prison-count").textContent = "⏳ " + WB.fmtTime(WB.CRIME.prisonLeft() / 1000);
+    const bail = WB.t("⚖️ Bail") + " " + WB.fmt(WB.CRIME.bailCost(), true);
+    if ($("prison-bail").textContent !== bail) $("prison-bail").textContent = bail;
   }
 
   function floatMoney(val, x, y) {
@@ -944,11 +967,36 @@ WB.UI = (function () {
     setTimeout(() => el.remove(), 1100);
   }
 
+  // ---------- Autoclicker easter egg ----------
+  function showAutoclickerEgg() {
+    openModal(`<div class="ev-icon">🤖</div><h2>${WB.t("Hold up.")}</h2>
+      <p>${WB.t("Oh.. You are using an autoclicker, what's the challenge?")}</p>
+      <div class="ev-choices">
+        <button class="btn choice" id="egg-ok">😇 ${WB.t("Ok, I will stop")}</button>
+        <button class="btn choice" id="egg-no">🖕 ${WB.t("F##k off")}</button>
+      </div>`);
+    $("egg-ok").onclick = () => { closeModal(); toast(WB.t("🤝 Respect. The grind must be earned."), "good"); };
+    $("egg-no").onclick = () => {
+      closeModal();
+      const bad = [
+        () => { const loss = Math.floor(st.money * 0.15); st.money -= loss;
+          openResult({ icon: "🧾", title: "Karma Tax", lines: ["The universe heard that.", "A mysterious 'processing fee' just drained your account."], money: -loss }); },
+        () => { st.res.stress = Math.min(100, st.res.stress + 40); st.res.energy = Math.max(0, st.res.energy - 50);
+          openResult({ icon: "🤕", title: "Finger Cramp", lines: ["Your clicking finger seized up mid-flex.", "Stress +40, energy −50. Worth it?"] }); },
+        () => { WB.CRIME.addHeat(20);
+          openResult({ icon: "🛰️", title: "Suspicious Activity Detected", lines: ["Someone flagged your inhuman clicking pattern.", "Heat +20. They're watching."] }); },
+        () => { st.boost = { mult: 0.5, until: Date.now() + 120000 };
+          openResult({ icon: "🐌", title: "Throttled", lines: ["Your WiFi provider 'optimized' your plan as punishment.", "Income ×0.5 for 2 minutes."] }); },
+      ];
+      WB.pick(bad)();
+    };
+  }
+
   // ============================================================ Boot
   function boot() {
     // Activities
     $("activities").innerHTML = Object.entries(D.ACTIVITIES).map(([key, a]) =>
-      `<button class="act-btn" data-focus="${key}"><span>${a.icon}</span><small>${a.name}</small></button>`).join("");
+      `<button class="act-btn" data-focus="${key}"><span>${a.icon}</span><small>${WB.t(a.name)}</small></button>`).join("");
     $("activities").addEventListener("click", e => {
       const b = e.target.closest(".act-btn");
       if (b && !b.classList.contains("locked")) { WB.GAME.setFocus(b.dataset.focus); renderHud(); }
@@ -956,7 +1004,7 @@ WB.UI = (function () {
 
     // Tabs
     $("tabs").innerHTML = Object.entries(TABS).map(([k, label]) =>
-      `<button class="tab-btn ${k === activeTab ? "active" : ""}" data-tab="${k}">${label}</button>`).join("");
+      `<button class="tab-btn ${k === activeTab ? "active" : ""}" data-tab="${k}">${WB.t(label)}</button>`).join("");
     $("tabs").addEventListener("click", e => {
       const b = e.target.closest("[data-tab]");
       if (!b) return;
@@ -966,8 +1014,17 @@ WB.UI = (function () {
     });
     $("tab-content").addEventListener("click", onTabClick);
 
-    // Hustle
+    // Hustle (with autoclicker easter egg)
+    let clickLog = [], lastEgg = 0;
     $("hustle-btn").addEventListener("click", e => {
+      const t2 = Date.now();
+      clickLog.push(t2);
+      if (clickLog.length > 14) clickLog.shift();
+      if (clickLog.length === 14 && t2 - clickLog[0] < 1500 && t2 - lastEgg > 240000 && !uiBusy()) {
+        lastEgg = t2; clickLog = [];
+        showAutoclickerEgg();
+        return;
+      }
       const v = WB.GAME.hustle();
       const rect = $("scene").getBoundingClientRect();
       floatMoney(v, e.clientX - rect.left + WB.rand(-12, 12), e.clientY - rect.top - 14);
@@ -1024,5 +1081,5 @@ WB.UI = (function () {
 
   document.addEventListener("DOMContentLoaded", boot);
 
-  return { toast, bubble, confetti, openResult, showPrison, hidePrison, getSetting };
+  return { toast, bubble, confetti, openResult, showPrison, hidePrison, getSetting, showSettings };
 })();

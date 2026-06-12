@@ -351,6 +351,18 @@ WB.EVENTS = (function () {
   // ---------- Minor events (auto-resolve, toast + thought) ----------
   // Each entry: cond (optional), weight, text, effect(s), bubble (optional thought reaction tag or literal)
   const MINOR = [
+    { w: 1.2, text: "A 'productivity guru' DMs you a course offer. You report it. Takes one to know one.",
+      effect: s => ({ happiness: 4 }), bubble: "Nice try. I AM the grindset." },
+    { w: 1.2, text: "Your rubber duck stares at you until the bug confesses itself.",
+      cond: s => s.focus === "code", effect: s => ({ motivation: 6 }), bubble: "The duck knows all. The duck judges all." },
+    { w: 1, text: "You find $20 in an old hoodie. Past you was a legend.",
+      effect: s => ({ money: 20, happiness: 5 }), bubble: "Thanks, past me. Investing this wisely. (Snacks.)" },
+    { w: 1.2, text: "A pigeon lands on the windowsill and watches you work. You feel observed. Possibly mentored.",
+      effect: s => ({ motivation: 4 }), bubble: "Yes, pigeon. I AM going to ship it today." },
+    { w: 1, text: "Your phone autocorrects 'investor' to 'imposter' in an important email. Twice.",
+      effect: s => ({ stress: 5, reputation: -1 }), bubble: "Autocorrect knows something I don't." },
+    { w: 0.8, cond: s => s.stats.followers > 1000, text: "A fan made fan-art of you. It's... mostly accurate. The chin is generous.",
+      effect: s => ({ happiness: 7, followers: 50 }), bubble: "Framing this. Immediately." },
     { cond: s => s.housing === 0, w: 3, text: "Mom interrupts: 'Are you still on that computer?' You lose your train of thought but gain a sandwich.",
       effect: s => ({ energy: 8, happiness: 4, motivation: -3 }), bubble: "Thanks for the sandwich, mom. The empire thanks you too." },
     { cond: s => s.housing === 0, w: 2, text: "Dad questions your life choices over dinner. 'When will you get a REAL job?'",
