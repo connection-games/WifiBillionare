@@ -14,6 +14,16 @@ WB.UI = (function () {
 
   // ============================================================ Bubbles / toasts
   let bubbleTimer = null;
+  function bubbleTrack() {
+    const el = $("bubble"), wrap = $("room-wrap");
+    if (!el || !wrap || !el.classList.contains("show")) return;
+    if (!(WB.ROOM && WB.ROOM.charX)) return;
+    const cw = wrap.clientWidth, ch = wrap.clientHeight;
+    const scale = Math.min(cw / 320, ch / 180);
+    const offX = (cw - 320 * scale) / 2;
+    const x = offX + WB.ROOM.charX() * 320 * scale;
+    el.style.left = Math.max(140, Math.min(cw - 140, x)) + "px";
+  }
   function bubble(text) {
     if (!text || !getSetting("bubbles")) return;
     const el = $("bubble");
@@ -21,6 +31,7 @@ WB.UI = (function () {
     el.classList.remove("show");
     void el.offsetWidth; // restart animation
     el.classList.add("show");
+    bubbleTrack();
     clearTimeout(bubbleTimer);
     bubbleTimer = setTimeout(() => el.classList.remove("show"), 6500);
   }
@@ -164,6 +175,14 @@ WB.UI = (function () {
   }
   let settingsTab = "general";
   const UPDATES = [
+    { v: "v5.4 — The Living Character Update", items: [
+      "🚽 NEW: Hygiene meter — your guy gets gross and walks himself to the toilet to freshen up.",
+      "🚶 The character now WALKS around the room — to the desk, the bed, the bathroom.",
+      "💭 Thought bubbles follow him as he moves.",
+      "🧠 Intelligence replaces Motivation as a meter, and is MUCH faster to raise (study, ship projects, learn by doing).",
+      "🧼 Hygiene replaces Happiness on the HUD; let it drop too low and income (and your nose) suffer.",
+      "💨 Stink lines when you really let yourself go.",
+    ]},
     { v: "v5.3 — The Menu Update", items: [
       "🎮 NEW: Main menu with Casual and Speedrun modes (speedrun = ~3× faster everything).",
       "🇸🇪 NEW: Swedish language in Settings → General, with SEK currency.",
@@ -740,7 +759,7 @@ WB.UI = (function () {
     grass:   ["🌱", "Touching Grass", "outside??? character growth"],
   };
   function moodFace(r) {
-    const m = (r.happiness + r.motivation) / 2 - r.stress * 0.35;
+    const m = (r.happiness + r.motivation) / 2 - r.stress * 0.35 - (r.hygiene != null && r.hygiene < 30 ? 14 : 0);
     if (m >= 70) return "😄 Great";
     if (m >= 45) return "🙂 Fine";
     if (m >= 25) return "😕 Meh";
@@ -769,6 +788,13 @@ WB.UI = (function () {
       $("housing-name").textContent = "🔒 " + WB.t("County Jail · Cell") + " " + cellNumber();
       return;
     }
+    if (st.bathroom) {
+      $("status-icon").textContent = "🚽";
+      $("status-label").textContent = WB.t("Bathroom Break");
+      $("status-sub").textContent = WB.t("very important business");
+      $("housing-name").textContent = D.HOUSING[st.housing].name;
+      return;
+    }
     const [icon, label, sub2] = STATUS_BY_FOCUS[st.focus] || ["💼", "Hustling", "doing entrepreneur things"];
     $("status-icon").textContent = icon;
     $("status-label").textContent = WB.t(label);
@@ -792,11 +818,10 @@ WB.UI = (function () {
     if (boost) $("boost-badge").textContent = `🔥 x${st.boost.mult} for ${Math.ceil((st.boost.until - Date.now()) / 1000)}s`;
 
     setBar("energy", r.energy, Math.round(r.energy));
-    setBar("happiness", r.happiness, Math.round(r.happiness));
-    setBar("motivation", r.motivation, Math.round(r.motivation));
+    setBar("hygiene", r.hygiene == null ? 70 : r.hygiene, Math.round(r.hygiene == null ? 70 : r.hygiene));
+    setBar("intel", Math.min(100, r.intelligence), Math.floor(r.intelligence));
     setBar("stress", r.stress, Math.round(r.stress));
     $("rep-val").textContent = Math.floor(r.reputation);
-    $("int-val").textContent = Math.floor(r.intelligence);
     $("followers-val").textContent = WB.fmt(st.stats.followers);
 
     // living character panel: status, mood, level, prison state
@@ -1076,6 +1101,7 @@ WB.UI = (function () {
     scheduleThoughts();
 
     setInterval(renderHud, 200);
+    setInterval(bubbleTrack, 120); // thought bubble follows him around the room
     setInterval(() => renderTab(false), 600);
   }
 

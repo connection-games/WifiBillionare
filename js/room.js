@@ -5,6 +5,7 @@
 
 WB.ROOM = (function () {
   let ctx = null, getState = null, frame = 0;
+  let pos = 168, facing = 1; // where the character is standing (canvas x)
 
   const W = 320, H = 180;
   const FLOOR_Y = 118;
@@ -338,6 +339,12 @@ WB.ROOM = (function () {
     const cc = chairCols[Math.min(ct, 7)];
     const chy = FLOOR_Y + 8;
 
+    if (state === "away") {
+      // chair sits empty while he's off walking somewhere
+      px(cx - 14, chy - 20, 6, 34, cc);
+      px(cx - 12, chy + 12, 14, 3, cc);
+      return;
+    }
     if (state === "grass") {
       // empty chair; character stands at the window
       px(cx - 14, chy - 20, 6, 34, cc);
@@ -383,6 +390,46 @@ WB.ROOM = (function () {
     px(cx - 11, hy + 14, 3, armY - (hy + 14), ERA_HOODIE[era]);
     px(cx + 8, hy + 14, 3, armY - (hy + 14) + (bob ? 1 : 0), ERA_HOODIE[era]);
     px(cx - 11, armY, 3, 3, SKIN); px(cx + 8, armY + (bob ? 1 : 0), 3, 3, SKIN);
+  }
+
+  // ---------- Walking + bathroom ----------
+  function drawToilet() {
+    const tx = 10, ty = FLOOR_Y + 28;
+    px(tx - 2, ty + 14, 22, 2, "#8d9096");      // bath mat shadow
+    px(tx, ty + 6, 16, 9, "#e6eaef");           // bowl
+    px(tx + 2, ty + 4, 12, 3, "#cdd3da");       // seat
+    px(tx + 3, ty - 8, 10, 12, "#e6eaef");      // tank
+    px(tx + 5, ty - 6, 6, 2, "#aab0b8");        // flush button
+    px(tx + 19, ty - 2, 4, 4, "#f4efe2");       // toilet paper
+    px(tx + 19, ty + 1, 4, 4, "#e8e2d4");
+  }
+  function drawToiletUse(era) {
+    const tx = 10, ty = FLOOR_Y + 28;
+    px(tx + 1, ty - 10, 10, 4, HAIR);           // seated, dignity mostly intact
+    px(tx + 2, ty - 7, 8, 6, SKIN);
+    px(tx - 1, ty - 1, 15, 8, ERA_HOODIE[era]);
+    px(tx + 1, ty + 7, 4, 6, "#39414f"); px(tx + 8, ty + 7, 4, 6, "#39414f");
+    px(tx + 15, ty - 2, 4, 6, "#15181f");       // phone. obviously.
+    if (frame % 8 < 4) px(tx + 16, ty - 1, 2, 2, "#5fd3a5");
+  }
+  function drawWalker(x, dir, era) {
+    const y = FLOOR_Y + 2;
+    const step = Math.floor(frame / 3) % 2;
+    px(x - 4 + (step ? 3 : 0), y + 22, 3, 8, "#39414f"); // legs scissor
+    px(x + 2 - (step ? 3 : 0), y + 22, 3, 8, "#39414f");
+    px(x - 4 + (step ? 3 : 0), y + 29, 4, 2, "#222");
+    px(x + 2 - (step ? 3 : 0), y + 29, 4, 2, "#222");
+    px(x - 6, y + 8, 12, 15, ERA_HOODIE[era]);           // body
+    px(x - 8 + (step ? 1 : 0), y + 11, 3, 9, ERA_HOODIE[era]); // swinging arm
+    px(x - 4, y, 9, 8, SKIN);                            // head, profile
+    px(x - 5, y - 3, 11, 5, HAIR);
+    px(x + (dir > 0 ? 3 : -2), y + 2, 2, 2, "#1d1d1f");  // eye toward direction
+  }
+  function drawStink(x, yTop) {
+    for (let i = 0; i < 3; i++) {
+      const wob = Math.sin(frame / 3 + i * 2) * 2;
+      px(x - 8 + i * 8 + wob, yTop - 6 - ((frame + i * 6) % 14), 2, 5, "rgba(140,190,90,0.45)");
+    }
   }
 
   // ---------- Situation set-pieces ----------
@@ -691,6 +738,7 @@ WB.ROOM = (function () {
 
     // locked up? the whole scene becomes a cell until release
     if (window.WB && WB.CRIME && WB.CRIME.inPrison()) {
+      pos = 258; // on the bunk
       drawPrison(s);
       frame++;
       return;
@@ -721,12 +769,35 @@ WB.ROOM = (function () {
     drawAssetProps(s);
     drawServer(eq);
     drawRouter(eq);
+    drawToilet();
     const desk = drawDesk(eq);
-    drawScreens(eq, desk, state, s.focus);
-    drawChairAndCharacter(eq, desk, state, s.era); // in front: we see their back against the glow
-    if (state === "work") {
-      if (s.focus === "study") drawStudyProps(desk);
-      if (s.focus === "ai") drawAIBuddy(desk);
+    const deskCx = desk.dx + desk.dw / 2;
+
+    // where should he be? (bathroom > bed > window > desk) — and walk there
+    const target = s.bathroom ? 22 : state === "rest" ? 60 : state === "grass" ? 56 : deskCx;
+    const moving = Math.abs(pos - target) > 4;
+    if (moving) {
+      facing = target > pos ? 1 : -1;
+      pos += facing * 3.4;
+    } else pos = target;
+
+    drawScreens(eq, desk, moving || s.bathroom ? "rest" : state, s.focus);
+    if (moving) {
+      drawChairAndCharacter(eq, desk, "away", s.era);
+      drawWalker(pos, facing, s.era);
+    } else if (s.bathroom) {
+      drawChairAndCharacter(eq, desk, "away", s.era);
+      drawToiletUse(s.era);
+    } else {
+      drawChairAndCharacter(eq, desk, state, s.era); // in front: we see their back against the glow
+      if (state === "work") {
+        if (s.focus === "study") drawStudyProps(desk);
+        if (s.focus === "ai") drawAIBuddy(desk);
+      }
+    }
+    // smells like startup spirit
+    if (s.res && s.res.hygiene != null && s.res.hygiene < 30 && !s.bathroom) {
+      drawStink(moving ? pos : (state === "rest" ? 60 : state === "grass" ? 56 : deskCx), FLOOR_Y - 38);
     }
     drawCat(h);
 
@@ -747,5 +818,5 @@ WB.ROOM = (function () {
     draw();
   }
 
-  return { init };
+  return { init, charX: () => pos / W };
 })();

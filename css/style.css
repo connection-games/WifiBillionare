@@ -100,9 +100,10 @@ b { font-weight: 600; }
 }
 #bubble {
   position: absolute; bottom: 44%; left: 50%; transform: translateX(-50%) scale(0.92);
+  transition: opacity 0.35s, transform 0.35s, left 0.3s ease-out; /* follows the walking character */
   max-width: 360px; background: rgba(255, 255, 255, 0.96); color: #1d1d1f;
   padding: 11px 17px; border-radius: 16px; font-size: 13.5px; line-height: 1.4;
-  opacity: 0; transition: opacity 0.35s, transform 0.35s; pointer-events: none;
+  opacity: 0; pointer-events: none;
   box-shadow: var(--shadow-md); z-index: 5;
 }
 #bubble::after {
@@ -243,6 +244,8 @@ b { font-weight: 600; }
 .fill.happiness { background: linear-gradient(90deg, #ff375f, #ff7da0); }
 .fill.motivation { background: linear-gradient(90deg, #0071e3, #5e9eff); }
 .fill.stress { background: linear-gradient(90deg, #ff453a, #e30000); }
+.fill.hygiene { background: linear-gradient(90deg, #30b0c7, #64d2ff); }
+.fill.intel { background: linear-gradient(90deg, #8944ab, #bf5af2); }
 .fill.skill { background: linear-gradient(90deg, #0071e3, #8944ab); }
 .fill.project { background: linear-gradient(90deg, #34c759, #0071e3); }
 .res-num { white-space: nowrap; color: var(--muted); font-weight: 500; }

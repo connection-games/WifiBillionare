@@ -33,7 +33,7 @@ WB.GAME = (function () {
     return {
       money: 0, lifetimeEarnings: 0,
       runStartedAt: Date.now(),
-      res: { energy: 100, happiness: 60, reputation: 0, motivation: 75, intelligence: 10, luck: 5, ego: 0, stress: 0 },
+      res: { energy: 100, happiness: 60, reputation: 0, motivation: 75, intelligence: 10, luck: 5, ego: 0, stress: 0, hygiene: 70 },
       skills: defaultSkills(),
       equipment: defaultEquipment(),
       careers: defaultCareers(),
@@ -156,6 +156,8 @@ WB.GAME = (function () {
     if (inPrison()) inc *= 0.5; // your operation runs at half speed from a cell
     if (s.focus === "rest") inc *= hasPerk("automation") ? 0.5 : 0.35;
     if (s.focus === "grass" || s.focus === "study") inc *= 0.6;
+    if (s.res.hygiene != null && s.res.hygiene < 30) inc *= 0.85; // nobody buys from the smelly guy
+    if (s.bathroom) inc *= 0.6;
     return inc;
   }
   function earn(amount) {
@@ -247,6 +249,8 @@ WB.GAME = (function () {
     return sp;
   }
   function finishProject() {
+    s.res.intelligence += 0.4; // shipping teaches more than any course
+
     const p = s.project;
     const skill = s.skills[p.skill].level;
     let pSuccess = Math.min(0.92, 0.55 + skill * 0.004 + luck() * 0.01) - (hasPerk("shipit") ? 0.05 : 0);
@@ -562,6 +566,31 @@ WB.GAME = (function () {
     const a = D.ACTIVITIES[s.focus];
 
     s.stats.playTimeSec += dt;
+    if (r.hygiene == null) r.hygiene = 70; // saves from before v5.4
+
+    // Hygiene: life is sweaty. Working drains it faster than lounging.
+    r.hygiene = Math.max(0, r.hygiene - (a && a.work ? 0.030 : 0.016) * dt);
+    if (!s.bathroom && r.hygiene <= 22 && !inPrison()) {
+      // nature calls — he walks to the toilet on his own (room.js animates it)
+      s.bathroom = { until: now + 9000 };
+      UI.bubble(WB.pick([
+        "Nature calls. The empire can wait 30 seconds.",
+        "Okay okay okay. Bathroom. NOW.",
+        "Pausing the grind for a very important meeting.",
+        "BRB. Critical infrastructure maintenance.",
+      ]));
+    }
+    if (s.bathroom) {
+      r.hygiene = Math.min(88, r.hygiene + 9.5 * dt);
+      if (now >= s.bathroom.until) {
+        s.bathroom = null;
+        UI.bubble(WB.pick(["Fresh. Focused. Dangerous.", "10/10 would flush again.", "Back. Nobody noticed. Probably.", "Washed hands AND face. Elite behavior."]));
+      }
+    }
+    if (r.hygiene < 30 && !s.stinkWarned) {
+      s.stinkWarned = 1;
+      UI.bubble(WB.pick(["I can smell myself. That's a new low.", "The hoodie has reached sentience. It disagrees with me.", "Deodorant is for people with funding."]));
+    } else if (r.hygiene > 55) s.stinkWarned = 0;
 
     // Income
     earn(incomePerSec() * dt);
@@ -619,11 +648,13 @@ WB.GAME = (function () {
     // XP from focused activity (boosted in v5 to reduce grind)
     if (a && a.skill && a.work) {
       gainXp(a.skill, (7 + r.intelligence * 0.07) * dt);
+      r.intelligence += 0.004 * dt; // learning by doing
     } else if (s.focus === "study") {
       gainXp("business", 6 * dt);
-      r.intelligence += 0.012 * dt;
+      r.intelligence += 0.05 * dt; // studying is 4x smarter than before
       r.energy = Math.max(0, r.energy - 0.08 * dt);
     }
+    if (s.focus === "grass") r.intelligence += 0.002 * dt; // shower thoughts, but outside
 
     // Reputation trickle from senior careers
     const tierSum = Object.values(s.careers).reduce((x, t) => x + Math.max(0, t), 0);

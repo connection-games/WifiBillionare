@@ -81,6 +81,8 @@ WB.I18N = (function () {
       "Ljud, språk, spel- och datainställningar. Öppnas när du klivit in i spelet.",
     "▶ Continue": "▶ Fortsätt",
     "© 2026 Connection Games · For entertainment only": "© 2026 Connection Games · Endast för underhållning",
+    // hygiene & bathroom
+    "🧼 Hygiene": "🧼 Hygien", "Bathroom Break": "Toalettpaus", "very important business": "mycket viktiga affärer",
     // easter egg
     "Hold up.": "Vänta lite.",
     "Oh.. You are using an autoclicker, what's the challenge?": "Oj.. Du använder en autoclicker — var är utmaningen?",
