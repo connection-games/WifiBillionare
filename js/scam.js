@@ -193,13 +193,13 @@ WB.SCAM = (function () {
   function renderInbox() {
     sess = null;
     const aiBadge = WB.aiEnabled()
-      ? `<span class="scam-ai on">● AI victims</span>`
-      : `<span class="scam-ai off">● offline victims (add OpenAI key in Settings for smart ones)</span>`;
+      ? `<span class="scam-ai on">● ${WB.t("AI victims")}</span>`
+      : `<span class="scam-ai off">● ${WB.t("offline victims (add OpenAI key in Settings for smart ones)")}</span>`;
     // assign a random method to each contact as the "incoming context"
     const rows = VICTIMS.map(v => {
       const m = WB.pick(METHODS);
       const scammed = (WB.CRIME.crimeState().victimsScammed[v.id] || 0);
-      const diff = v.skepticism > 0.65 ? "🔴 hard" : v.skepticism > 0.35 ? "🟡 medium" : "🟢 easy";
+      const diff = v.skepticism > 0.65 ? "🔴 " + WB.t("hard") : v.skepticism > 0.35 ? "🟡 " + WB.t("medium") : "🟢 " + WB.t("easy");
       return `<button class="scam-contact" data-v="${v.id}" data-m="${m.id}">
         <span class="scam-avatar">${v.avatar}</span>
         <span class="scam-contact-main">
@@ -208,11 +208,12 @@ WB.SCAM = (function () {
         </span></button>`;
     }).join("");
     $("scam-body").innerHTML = `
-      <div class="scam-inbox-head"><b>Targets</b> ${aiBadge}</div>
+      <div class="scam-inbox-head"><b>${WB.t("Targets")}</b> ${aiBadge}</div>
       <div class="scam-inbox">${rows}</div>
-      <p class="scam-foot muted">Parody mode. These are fictional characters. Build trust, then cash out — but watch the heat.</p>`;
-    $("scam-title").textContent = "📱 Messages";
-    $("scam-sub").textContent = "Inbox";
+      <p class="scam-foot muted">${WB.t("Parody mode. These are fictional characters. Build trust, then cash out — but watch the heat.")}</p>`;
+    $("scam-title").textContent = "📱 " + WB.t("Messages");
+    $("scam-sub").textContent = WB.t("Inbox");
+    WB.I18N.translateDom($("scam-body"));
     $("scam-back").style.display = "none";
     $("scam-body").querySelectorAll(".scam-contact").forEach(b => {
       b.onclick = () => openChat(b.dataset.v, b.dataset.m);
@@ -225,14 +226,14 @@ WB.SCAM = (function () {
       goalTrust: goalTrustFor(v), goalDone: false, cashoutShown: false,
       history: [], over: false, busy: false, reported: false };
     $("scam-title").textContent = `${v.avatar} ${v.name}`;
-    $("scam-sub").textContent = "online now";
+    $("scam-sub").textContent = WB.t("online now");
     $("scam-back").style.display = "";
     $("scam-body").innerHTML = `
       <div class="chat-goal" id="chat-goal">
-        <div class="goal-line"><span class="goal-ico">${m.goalIcon || "🎯"}</span><span class="goal-txt" id="goal-txt"><b>Goal:</b> ${esc(m.goal)}</span></div>
+        <div class="goal-line"><span class="goal-ico">${m.goalIcon || "🎯"}</span><span class="goal-txt" id="goal-txt"><b>${WB.t("Goal:")}</b> ${esc(WB.t(m.goal))}</span></div>
         <div class="goal-meters">
           <div class="trust-row" title="How much they trust you — fill it to secure the goal">
-            <span class="tm-label">❤️ Trust</span>
+            <span class="tm-label">❤️ ${WB.t("Trust")}</span>
             <div class="trust-meter"><div class="trust-fill" id="trust-fill"></div><div class="trust-mark" id="trust-mark"></div></div>
             <span class="tm-val" id="trust-val">0%</span>
           </div>
@@ -246,20 +247,21 @@ WB.SCAM = (function () {
       <div class="chat-scroll" id="chat-scroll"></div>
       <div class="chat-suggest" id="chat-suggest"></div>
       <div class="chat-input-row">
-        <input id="chat-input" type="text" autocomplete="off" placeholder="Type your message…" maxlength="280">
+        <input id="chat-input" type="text" autocomplete="off" placeholder="${WB.t("Type your message…")}" maxlength="280">
         <button id="chat-send" class="chat-send">➤</button>
       </div>`;
     // place the "goal secured" marker on the trust bar
     const mark = $("trust-mark"); if (mark) mark.style.left = sess.goalTrust + "%";
     setScare(sess.scare);
     setTrust(sess.trust, true);
+    WB.I18N.translateDom($("scam-body"));
     // seed with the angle opener as a suggested first line
-    $("chat-suggest").innerHTML = `<button class="suggest-chip" data-s="${m.opener.replace(/"/g, "&quot;")}">💡 ${m.opener}</button>`;
+    $("chat-suggest").innerHTML = `<button class="suggest-chip" data-s="${WB.t(m.opener).replace(/"/g, "&quot;")}">💡 ${WB.t(m.opener)}</button>`;
     $("chat-suggest").querySelector(".suggest-chip").onclick = e => { $("chat-input").value = e.target.dataset.s; $("chat-input").focus(); };
     $("chat-send").onclick = send;
     $("chat-input").onkeydown = e => { if (e.key === "Enter") send(); };
     setTimeout(() => $("chat-input").focus(), 50);
-    addMsg("them", WB.pick(["hello?", "who's this?", "hi, do I know you?", v.avatar + " ...yes?"]), true);
+    addMsg("them", WB.t(WB.pick(["hello?", "who's this?", "hi, do I know you?"])), true);
   }
 
   // ---------- Scare meter (smooth: scaleX transition reveals a fixed gradient) ----------
@@ -270,7 +272,7 @@ WB.SCAM = (function () {
     if (!cover) return;
     cover.style.transform = `scaleX(${1 - sess.scare / 100})`;
     const s = sess.scare;
-    const [e, l] = s < 25 ? ["🙂", "Calm"] : s < 50 ? ["😟", "Nervous"] : s < 75 ? ["😨", "Scared"] : ["😱", "PANICKING"];
+    const [e, l] = s < 25 ? ["🙂", WB.t("Calm")] : s < 50 ? ["😟", WB.t("Nervous")] : s < 75 ? ["😨", WB.t("Scared")] : ["😱", WB.t("PANICKING")];
     if (em.textContent !== e) { em.textContent = e; em.classList.remove("pop"); void em.offsetWidth; em.classList.add("pop"); }
     state.textContent = l;
     wrap.classList.toggle("hot", s >= 75);
@@ -297,7 +299,7 @@ WB.SCAM = (function () {
     sess.goalDone = true;
     const g = $("chat-goal"); if (g) g.classList.add("secured");
     const txt = $("goal-txt");
-    if (txt) txt.innerHTML = `<b>✅ Goal secured!</b> ${esc(sess.method.goal)}`;
+    if (txt) txt.innerHTML = `<b>✅ ${WB.t("Goal secured!")}</b> ${esc(WB.t(sess.method.goal))}`;
     showCashout("send_money", baseWealthPayout());
   }
 
@@ -349,7 +351,7 @@ WB.SCAM = (function () {
     if (!sess) return; // chat was closed while they were "typing"
     if (typeof reply.scare === "number") setScare(reply.scare);
     addMsg("them", reply.message);
-    $("scam-sub").textContent = (reply.mood || "🙂") + " online now";
+    $("scam-sub").textContent = (reply.mood || "🙂") + " " + WB.t("online now");
     sess.busy = false;
     if (typeof reply.trust === "number") setTrust(reply.trust);
 
@@ -370,7 +372,7 @@ WB.SCAM = (function () {
   function showCashout(act, payout) {
     if (!sess || sess.over || sess.cashoutShown) return;
     sess.cashoutShown = true;
-    const label = { send_money: "💸 Take the money", share_info: "🪪 Use their info", click_link: "🔗 Drain via the link" }[act] || "💸 Cash out";
+    const label = WB.t({ send_money: "💸 Take the money", share_info: "🪪 Use their info", click_link: "🔗 Drain via the link" }[act] || "💸 Cash out");
     const scroll = $("chat-scroll");
     const el = document.createElement("div");
     el.className = "chat-cashout";
@@ -387,15 +389,15 @@ WB.SCAM = (function () {
     WB.CRIME.scamResolved(win, payout || 0, v.id, reported);
     let title, lines, icon, cls;
     if (win) {
-      icon = sess.method.goalIcon || "💰"; title = "Scam Successful"; cls = "win";
-      lines = [sess.method.win || `You cleaned out ${v.name}.`, "Heat ticked up. Maybe launder it later."];
+      icon = sess.method.goalIcon || "💰"; title = WB.t("Scam Successful"); cls = "win";
+      lines = [WB.t(sess.method.win) || `You cleaned out ${v.name}.`, WB.t("Heat ticked up. Maybe launder it later.")];
       WB.UI.confetti();
     } else if (reported) {
-      icon = "🚨"; title = "You Got Reported"; cls = "bust";
-      lines = [`${v.name} saw through you and reported the number.`, "Heat is climbing — keep this up and it's jail time."];
+      icon = "🚨"; title = WB.t("You Got Reported"); cls = "bust";
+      lines = [`${v.name} ` + WB.t("saw through you and reported the number."), WB.t("Heat is climbing — keep this up and it's jail time.")];
     } else {
-      icon = "📵"; title = "They Ghosted You"; cls = "ghost";
-      lines = [`${v.name} stopped replying.`, "No money, no heat. Try a softer approach next time."];
+      icon = "📵"; title = WB.t("They Ghosted You"); cls = "ghost";
+      lines = [`${v.name} ` + WB.t("stopped replying."), WB.t("No money, no heat. Try a softer approach next time.")];
     }
     // result shows INSIDE the phone (a modal underneath the overlay was invisible)
     setTimeout(() => {
@@ -409,9 +411,10 @@ WB.SCAM = (function () {
           <h3>${title}</h3>
           ${lines.map(l => `<p>${l}</p>`).join("")}
           ${win ? `<div class="scam-result-money">+${WB.fmt(payout, true)}</div>` : ""}
-          <button class="btn primary wide" id="scam-result-done">Back to targets</button>
+          <button class="btn primary wide" id="scam-result-done">${WB.t("Back to targets")}</button>
         </div>`;
       body.appendChild(el);
+      WB.I18N.translateDom(el);
       $("scam-result-done").onclick = renderInbox;
     }, 700);
   }

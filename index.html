@@ -18,7 +18,7 @@
       <div class="badge" id="boost-badge" style="display:none"></div>
       <div class="badge" id="heat-pill" style="display:none"></div>
       <div class="spacer"></div>
-      <button id="prestige-pill" style="display:none">♻️ PRESTIGE READY</button>
+      <button id="prestige-pill" style="display:none" data-i18n="♻️ PRESTIGE READY">♻️ PRESTIGE READY</button>
       <button id="notif-btn" title="Notifications">🔔<span id="notif-badge" style="display:none">0</span></button>
       <button id="theme-btn" title="Toggle dark mode">🌙</button>
       <button id="settings-btn" title="Settings">⚙️</button>
@@ -30,12 +30,14 @@
 
       <section id="scene">
         <div id="room-wrap">
-          <canvas id="room-canvas" width="320" height="180"></canvas>
-          <div id="housing-name">Parents' Bedroom</div>
-          <div id="bubble"></div>
-          <div id="project-box" style="display:none">
-            <div id="project-name"></div>
-            <div class="bar"><div class="fill project" id="project-fill" style="width:0%"></div></div>
+          <div id="room-frame">
+            <canvas id="room-canvas" width="320" height="180"></canvas>
+            <div id="housing-name">Parents' Bedroom</div>
+            <div id="bubble"></div>
+            <div id="project-box" style="display:none">
+              <div id="project-name"></div>
+              <div class="bar"><div class="fill project" id="project-fill" style="width:0%"></div></div>
+            </div>
           </div>
         </div>
 

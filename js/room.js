@@ -433,14 +433,23 @@ WB.ROOM = (function () {
   }
 
   // ---------- Situation set-pieces ----------
-  function drawBedSleeper(era) {
-    const bx = 26, by = FLOOR_Y + 18; // bed sits on the floor, bottom-left
-    const breathe = Math.floor(frame / 7) % 2;
+  // The bed is REAL furniture now — always in the room, bottom-left.
+  function drawBed(era, occupied) {
+    const bx = 26, by = FLOOR_Y + 18;
     px(bx - 4, by - 22, 5, 34, "#5b432e");                 // headboard
     px(bx + 64, by - 10, 5, 22, "#5b432e");                // footboard
     px(bx, by, 66, 8, "#6e5238");                          // frame
     px(bx, by - 6, 66, 7, "#e8e2d4");                      // mattress
     px(bx + 1, by - 11, 14, 6, "#f4efe2");                 // pillow
+    if (!occupied) {                                       // made bed: folded blanket
+      px(bx + 40, by - 10, 24, 5, ERA_HOODIE[era]);
+      px(bx + 40, by - 10, 24, 2, shade(ERA_HOODIE[era]));
+    }
+    return { bx, by };
+  }
+  function drawBedSleeper(era) {
+    const { bx, by } = drawBed(era, true);
+    const breathe = Math.floor(frame / 7) % 2;
     // sleeper: head on pillow, body bump under blanket
     px(bx + 4, by - 15, 9, 4, HAIR);
     px(bx + 5, by - 12, 8, 5, SKIN);
@@ -499,6 +508,70 @@ WB.ROOM = (function () {
     px(dx + 28, dy - 4, 4, 1, "#a59c8c"); px(dx + 37, dy - 4, 4, 1, "#a59c8c");
     px(dx + 28, dy - 2, 4, 1, "#a59c8c"); px(dx + 37, dy - 2, 4, 1, "#a59c8c");
     if (Math.floor(frame / 12) % 4 === 0) px(dx + 42, dy - 6, 2, 3, "#f4efe2"); // page flip
+  }
+
+  // ---------- Space environments (Empire endgame: lunar base / Mars colony) ----------
+  function drawSpaceRoom(env) {
+    const mars = env === "mars";
+    const wall = mars ? "#5a3833" : "#39404f", wallD = mars ? "#4a2d29" : "#2e3441";
+    const floor = mars ? "#4d3a36" : "#3f4654", floorD = mars ? "#3f2f2c" : "#343a47";
+    // hull walls with panel ribs
+    px(0, 0, W, FLOOR_Y, wall);
+    px(0, 0, W, 12, wallD);
+    px(0, FLOOR_Y - 6, W, 6, wallD);
+    for (let i = 0; i < 9; i++) px(18 + i * 36, 12, 2, FLOOR_Y - 18, wallD);
+    for (let i = 0; i < 9; i++) px(34 + i * 36, 30, 3, 3, "#8a93a6"); // rivets
+    // metal deck floor
+    px(0, FLOOR_Y, W, H - FLOOR_Y, floor);
+    for (let i = 0; i < 7; i++) px(0, FLOOR_Y + 6 + i * 8, W, 1, floorD);
+    px(0, FLOOR_Y, W, 2, mars ? "#2e211f" : "#252a35");
+    // big porthole: the new world outside
+    const cx2 = 56, cy2 = 44, R = 26;
+    ctx.save();
+    ctx.beginPath(); ctx.arc(cx2, cy2, R, 0, Math.PI * 2); ctx.clip();
+    px(cx2 - R, cy2 - R, R * 2, R * 2, "#05070f");                 // space
+    const r = srand(env === "mars" ? 41 : 37);
+    for (let i = 0; i < 22; i++) {
+      const sx = cx2 - R + Math.floor(r() * R * 2), sy = cy2 - R + Math.floor(r() * R * 2);
+      if ((i + Math.floor(frame / 6)) % 6) px(sx, sy, 1, 1, "#dfe7ff");
+    }
+    if (mars) {
+      px(cx2 - R, cy2 + 8, R * 2, R, "#a14a32");                   // red dunes
+      px(cx2 - R + 6, cy2 + 10, 16, 3, "#8a3d28");
+      px(cx2 + 4, cy2 + 14, 20, 3, "#8a3d28");
+      px(cx2 + 12, cy2 - 14, 5, 5, "#cfd8e8");                     // Phobos, probably
+    } else {
+      px(cx2 - R, cy2 + 8, R * 2, R, "#9a9da6");                   // moon regolith
+      px(cx2 - R + 8, cy2 + 12, 12, 3, "#7e828c");
+      px(cx2 + 6, cy2 + 15, 14, 3, "#7e828c");
+      px(cx2 + 8, cy2 - 16, 11, 11, "#3f7ec2");                    // Earth, homesick-sized
+      px(cx2 + 10, cy2 - 14, 4, 3, "#5da05c");
+      px(cx2 + 13, cy2 - 9, 3, 2, "#5da05c");
+    }
+    ctx.restore();
+    // porthole ring
+    ctx.strokeStyle = "#8a93a6"; ctx.lineWidth = 4;
+    ctx.beginPath(); ctx.arc(cx2, cy2, R + 1, 0, Math.PI * 2); ctx.stroke();
+    px(cx2 - 4, cy2 - R - 7, 8, 4, "#8a93a6");                     // top bolt
+    // wall props: your flag, oxygen tanks, status console
+    const wave = Math.floor(frame / 5) % 2;
+    px(122, 24, 2, 26, "#c8cad0");
+    px(124, 24, 18 + wave, 11, mars ? "#ff6b4a" : "#34c759");      // the $ flag
+    ctx.font = "bold 8px 'Courier New', monospace";
+    ctx.fillStyle = mars ? "#5a1d10" : "#0a3d1e";
+    ctx.fillText("$", 130, 33);
+    px(250, FLOOR_Y - 30, 10, 30, "#aab0b8"); px(252, FLOOR_Y - 34, 6, 5, "#7e828c"); // O2 tank
+    px(262, FLOOR_Y - 26, 8, 26, "#9aa0aa"); px(264, FLOOR_Y - 30, 4, 5, "#7e828c");
+    px(150, 22, 40, 18, "#10141f");                                 // status console
+    px(152, 24, 36, 14, "#0e2233");
+    const blink = Math.floor(frame / 4) % 3;
+    px(155, 27, 8, 2, blink === 0 ? "#5eead4" : "#1f4a3c");
+    px(155, 31, 12, 2, blink === 1 ? "#ffd60a" : "#4a3d18");
+    px(155, 35, 6, 2, blink === 2 ? "#ff6b5e" : "#4a2320");
+    px(170, 26, 14, 10, mars ? "#a14a32" : "#9a9da6");              // little map of outside
+    // a slow low-gravity dust mote, for ambiance
+    const t = (frame * 0.6) % 200;
+    px(200 + Math.sin(t / 9) * 30, 60 + (t % 50), 2, 2, "rgba(220,225,235,0.4)");
   }
 
   // ---------- Prison cell (the whole room changes) ----------
@@ -598,8 +671,14 @@ WB.ROOM = (function () {
     cut = { name, start: Date.now() };
     pos = 160; // keep the thought bubble centered during the movie
   }
+  // a one-shot narrator card, e.g. playCard("5 BILLION HOURS LATER…", "(it was 9 hours)")
+  function playCard(title, sub, dur) {
+    cut = { name: "__card", start: Date.now(), card: { title: String(title || ""), sub: sub || "", dur: dur || 2800 } };
+    pos = 160;
+  }
 
   function caption(text, y) {
+    if (window.WB && WB.t) text = WB.t(text);
     ctx.font = "bold 9px 'Courier New', monospace";
     ctx.textAlign = "center";
     ctx.fillStyle = "rgba(0,0,0,0.55)";
@@ -870,12 +949,79 @@ WB.ROOM = (function () {
     if (p > 0.92) { ctx.fillStyle = `rgba(0,0,0,${(p - 0.92) * 10})`; ctx.fillRect(0, 0, W, H); }
   }
 
+  // --- freedom: the walk home ---
+  function sceneRelease(p) {
+    // dawn sky — first sunrise as a free man
+    px(0, 0, W, 120, "#2a3354");
+    px(0, 60, W, 30, "#4a3f63");
+    px(0, 90, W, 30, "#7a4a58");
+    px(36, 78, 14, 14, "#ffd97a"); px(38, 76, 10, 2, "#ffe9a0"); // rising sun
+    px(0, 120, W, 60, "#3a3d44");
+    // the jail behind him, getting smaller (drawn left)
+    px(8, 44, 90, 78, "#4b4e55");
+    px(4, 36, 98, 10, "#3f424a");
+    for (let i = 0; i < 2; i++) { px(20 + i * 34, 56, 16, 12, "#16203a"); for (let b = 0; b < 3; b++) px(22 + i * 34 + b * 5, 56, 2, 12, "#22242a"); }
+    px(40, 92, 26, 30, "#22242a"); px(44, 96, 18, 24, "#101216"); // open gate!
+    ctx.font = "bold 8px 'Courier New', monospace"; ctx.fillStyle = "#c8cad0"; ctx.textAlign = "center";
+    ctx.fillText("COUNTY JAIL", 53, 52); ctx.textAlign = "left";
+    const s = getState();
+    drawWalker(70 + p * 220, 1, s.era || 0); // strutting out, not looking back
+    // a thrown paper bag of belongings? a bird. freedom bird.
+    px(120 + p * 160, 40 + Math.sin(frame / 3) * 4, 4, 2, "#dfe7ff");
+    px(118 + p * 160, 39 + Math.sin(frame / 3 + 1) * 4, 3, 2, "#dfe7ff");
+    caption(p < 0.5 ? "FREE. The grind never did time." : "Note to self: crime, but more carefully.", 158);
+  }
+  function sceneHome(p) {
+    px(0, 0, W, 120, "#2c3854");                  // morning street
+    px(60, 70, 12, 12, "#ffe9a0");
+    px(0, 120, W, 60, "#3f4a3a");
+    px(0, 120, W, 3, "#34402f");
+    // home sweet rented home
+    px(190, 38, 100, 84, "#6b5a78");
+    px(184, 26, 112, 14, "#4a3d54");
+    px(206, 56, 20, 18, "#ffd97a");               // warm lit window
+    px(252, 56, 20, 18, "#16203a");
+    px(226, 86, 22, 36, "#5b432e");               // front door
+    if (p > 0.7) px(228, 88, 18, 34, "#241c12");  // door opens
+    const s = getState();
+    if (p < 0.85) drawWalker(40 + p * 200, 1, s.era || 0);
+    caption(p < 0.6 ? "Home. The router missed me." : "Right. Where was I? Ah yes — getting rich.", 158);
+  }
+
+  // --- "5 BILLION HOURS LATER…" style title card ---
+  function sceneTitleCard(p, card) {
+    starsBg(26, 3);
+    ctx.fillStyle = "rgba(0,0,0,0.45)";
+    ctx.fillRect(0, 0, W, H);
+    const a = p < 0.18 ? p / 0.18 : p > 0.88 ? (1 - p) / 0.12 : 1; // fade in/out
+    ctx.textAlign = "center";
+    ctx.font = "bold 15px 'Courier New', monospace";
+    ctx.fillStyle = `rgba(255,233,160,${a})`;
+    ctx.fillText(card.title, W / 2, 84);
+    if (card.sub) {
+      ctx.font = "bold 9px 'Courier New', monospace";
+      ctx.fillStyle = `rgba(200,210,230,${a * 0.9})`;
+      ctx.fillText(card.sub, W / 2, 102);
+    }
+    ctx.textAlign = "left";
+    // little twinkle accents
+    if (a === 1) {
+      const tw = Math.floor(frame / 4) % 3;
+      px(70 + tw * 6, 70, 2, 2, "#ffe9a0");
+      px(244 - tw * 5, 110, 2, 2, "#ffe9a0");
+    }
+  }
+
   const CUTS = {
     arrest: [
       { dur: 2100, draw: sceneKnock },
       { dur: 2700, draw: sceneEscort },
       { dur: 2500, draw: p => sceneDrive(p, "police") },
       { dur: 2100, draw: sceneJailArrive },
+    ],
+    release: [
+      { dur: 2600, draw: sceneRelease },
+      { dur: 2400, draw: sceneHome },
     ],
     launch: [
       { dur: 1700, draw: sceneWalkOut },
@@ -893,6 +1039,13 @@ WB.ROOM = (function () {
   };
 
   function drawCut() {
+    if (cut.name === "__card") {
+      const t = Date.now() - cut.start;
+      if (t >= cut.card.dur) { cut = null; return false; }
+      sceneTitleCard(Math.min(1, t / cut.card.dur), cut.card);
+      letterbox();
+      return true;
+    }
     const seq = CUTS[cut.name];
     let t = Date.now() - cut.start;
     for (const ph of seq) {
@@ -1071,27 +1224,35 @@ WB.ROOM = (function () {
 
     const h = s.housing, p = PAL[h], eq = s.equipment;
     const state = s.focus === "rest" ? "rest" : (s.focus === "grass" ? "grass" : "work");
+    // Empire endgame: own a lunar base → you LIVE there. Mars colony upgrades it again.
+    const spaceStage = (window.WB && WB.EMPIRE) ? WB.EMPIRE.stageOf("space") : -1;
+    const env = spaceStage >= 6 ? "mars" : spaceStage >= 4 ? "moon" : "earth";
 
-    // walls with shade bands
-    px(0, 0, W, FLOOR_Y, p.wall);
-    px(0, 0, W, 12, p.wallD);
-    px(0, FLOOR_Y - 6, W, 6, p.wallD);
-    // floor with planks
-    px(0, FLOOR_Y, W, H - FLOOR_Y, p.floor);
-    for (let i = 0; i < 7; i++) px(0, FLOOR_Y + 6 + i * 8, W, 1, p.floorD);
-    for (let i = 0; i < 10; i++) px(16 + i * 32 + (i % 2) * 12, FLOOR_Y + 6 + (i % 7) * 8, 1, 8, p.floorD);
-    px(0, FLOOR_Y, W, 2, p.trim); // skirting
+    if (env !== "earth") {
+      drawSpaceRoom(env);
+      drawClock(); // a wall clock on the Moon still shows Earth deadlines
+    } else {
+      // walls with shade bands
+      px(0, 0, W, FLOOR_Y, p.wall);
+      px(0, 0, W, 12, p.wallD);
+      px(0, FLOOR_Y - 6, W, 6, p.wallD);
+      // floor with planks
+      px(0, FLOOR_Y, W, H - FLOOR_Y, p.floor);
+      for (let i = 0; i < 7; i++) px(0, FLOOR_Y + 6 + i * 8, W, 1, p.floorD);
+      for (let i = 0; i < 10; i++) px(16 + i * 32 + (i % 2) * 12, FLOOR_Y + 6 + (i % 7) * 8, 1, 8, p.floorD);
+      px(0, FLOOR_Y, W, 2, p.trim); // skirting
 
-    drawWindow(p, h);
-    drawCurtains(p, h);
-    drawSunbeam(p);
-    drawDecor(h, eq);
-    drawClock();
-    drawCeilingLight(h);
-    drawLamp(h);
-    drawRug(h);
-    drawClutter(h);
-    drawAssetProps(s);
+      drawWindow(p, h);
+      drawCurtains(p, h);
+      drawSunbeam(p);
+      drawDecor(h, eq);
+      drawClock();
+      drawCeilingLight(h);
+      drawLamp(h);
+      drawRug(h);
+      drawClutter(h);
+      drawAssetProps(s);
+    }
     drawServer(eq);
     drawRouter(eq);
     drawToilet();
@@ -1101,6 +1262,8 @@ WB.ROOM = (function () {
     // where should he be? (bathroom > bed > window > desk) — and walk there
     const target = s.bathroom ? 22 : state === "rest" ? 60 : state === "grass" ? 56 : deskCx;
     const moving = Math.abs(pos - target) > 4;
+    // the bed is permanent furniture; the sleeper variant is drawn while he's in it
+    if (!(state === "rest" && !moving && !s.bathroom)) drawBed(s.era, false);
     if (moving) {
       facing = target > pos ? 1 : -1;
       pos += facing * 3.4;
@@ -1143,5 +1306,5 @@ WB.ROOM = (function () {
     draw();
   }
 
-  return { init, play, charX: () => pos / W, cutActive: () => !!cut };
+  return { init, play, playCard, charX: () => pos / W, cutActive: () => !!cut };
 })();

@@ -100,6 +100,7 @@ WB.CRIME = (function () {
     S().money -= cost;
     c.prisonUntil = 0;
     addHeat(8);
+    if (WB.ROOM && WB.ROOM.play) WB.ROOM.play("release"); // money opens doors. literally.
     WB.UI.toast(`⚖️ Posted bail for ${WB.fmt(cost, true)}. Free… for now. (+heat)`, "good");
     return true;
   }
@@ -187,8 +188,8 @@ WB.CRIME = (function () {
     if (c.heat > 0) c.heat = Math.max(0, c.heat - 0.04 * dt);
     if (c.prisonUntil && c.prisonUntil <= now()) {
       c.prisonUntil = 0;
+      if (WB.ROOM && WB.ROOM.play) WB.ROOM.play("release"); // gates open, sunrise, walk home
       WB.UI.toast("🔓 Released from jail. Reformed? Absolutely not.", "good");
-      WB.UI.bubble("Free man. Free WiFi. Back to it.");
       if (WB.UI.hidePrison) WB.UI.hidePrison();
     }
   }

@@ -15,17 +15,18 @@ WB.UI = (function () {
   // ============================================================ Bubbles / toasts
   let bubbleTimer = null;
   function bubbleTrack() {
-    const el = $("bubble"), wrap = $("room-wrap");
-    if (!el || !wrap || !el.classList.contains("show")) return;
+    const el = $("bubble"), frame = $("room-frame");
+    if (!el || !frame || !el.classList.contains("show")) return;
     if (!(WB.ROOM && WB.ROOM.charX)) return;
-    const cw = wrap.clientWidth, ch = wrap.clientHeight;
-    const scale = Math.min(cw / 320, ch / 180);
-    const offX = (cw - 320 * scale) / 2;
-    const x = offX + WB.ROOM.charX() * 320 * scale;
+    // a cutscene is a movie — no inner monologue over it
+    if (WB.ROOM.cutActive && WB.ROOM.cutActive()) { el.classList.remove("show"); return; }
+    const cw = frame.clientWidth; // frame is exactly 16:9 — canvas fills it
+    const x = WB.ROOM.charX() * cw;
     el.style.left = Math.max(140, Math.min(cw - 140, x)) + "px";
   }
   function bubble(text) {
     if (!text || !getSetting("bubbles")) return;
+    if (WB.ROOM && WB.ROOM.cutActive && WB.ROOM.cutActive()) return; // never during a cutscene
     const el = $("bubble");
     el.textContent = text;
     el.classList.remove("show");
@@ -99,6 +100,7 @@ WB.UI = (function () {
 
   let lastToastText = "", lastToastAt = 0;
   function toast(text, type) {
+    text = WB.t(text); // constant toasts translate; composed ones pass through
     pushNotif(text, type); // everything is collected in the inbox
     if (!POPUP_TYPES.has(type || "info")) return; // chatty stuff stays in the inbox
     if (text === lastToastText && Date.now() - lastToastAt < 5000) return; // de-dupe bursts
@@ -155,8 +157,8 @@ WB.UI = (function () {
     // wait while the texting app or the tutorial is up — never stack popups
     if (scamOpen() || tutStep >= 0) { setTimeout(() => offerPerks(perks), 2500); return; }
     openModal(`
-      <h2>✨ Level Up — Choose a Perk</h2>
-      <p class="muted">Pick one. The other two are lost to the multiverse.</p>
+      <h2>✨ ${WB.t("Level Up — Choose a Perk")}</h2>
+      <p class="muted">${WB.t("Pick one. The other two are lost to the multiverse.")}</p>
       <div class="perk-cards">${perks.map((p, i) =>
         `<button class="perk-card" data-perk="${i}"><div class="perk-icon">${p.icon}</div><div class="perk-name">${p.name}</div><div class="perk-desc">${p.desc}</div></button>`).join("")}
       </div>`);
@@ -165,6 +167,8 @@ WB.UI = (function () {
     });
   }
   function showOffline(off) {
+    // narrator card first, results after — like every good montage
+    if (WB.ROOM.playCard) WB.ROOM.playCard(WB.t("5 BILLION HOURS LATER…"), "(" + WB.t("fine, it was") + " " + WB.fmtTime(off.away) + ")", 3000);
     openModal(`
       <div class="ev-icon">🌙</div>
       <h2>While You Were Away…</h2>
@@ -175,6 +179,16 @@ WB.UI = (function () {
   }
   let settingsTab = "general";
   const UPDATES = [
+    { v: "v6.2 — The Polish & Planets Update", items: [
+      "🌕 NEW ENVIRONMENTS: own a Lunar Base and your room MOVES to the Moon (Mars Colony upgrades it again — portholes, $ flag, low-gravity dust).",
+      "🎬 New cutscenes: walk free from jail at sunrise, '5 BILLION HOURS LATER…' narrator cards on offline returns, era changes and rebirth.",
+      "🛏️ A real bed in the room — made when he's up, occupied when he sleeps.",
+      "🖼️ The room is now ALWAYS a perfect 16:9 frame — no black bars, any window size.",
+      "⚖️ Economy rebalanced: Empire income is flat (planets pay rent, they don't compound) — no more accidental infinite money.",
+      "🚔 Jail fixes: bars only appear when you're actually IN the cell, never over text; thoughts never interrupt cutscenes.",
+      "🇸🇪 Swedish overhaul: housing, careers, crime, scams, actions, goals, stats, perks — hela rubbet.",
+      "🔧 Auto-update hardened: releases can no longer be published under the wrong version.",
+    ]},
     { v: "v6.0 — The Empire Update", items: [
       "🪐 NEW SECRET: hit $1T net worth and a hidden tab opens — found a space company, buy the Moon, build your own city-state, simulate a universe.",
       "🎬 NEW: in-room cutscenes — get arrested and watch the cops drive you downtown; buy the Moon and watch the full rocket trip.",
@@ -495,18 +509,18 @@ WB.UI = (function () {
     let html = `<div class="section-title">🏠 Housing</div>`;
     const h = D.HOUSING[st.housing];
     const next = D.HOUSING[st.housing + 1];
-    html += `<div class="card"><div class="card-main"><b>${h.name}</b> <span class="tag">x${h.mult} income</span><div class="muted">${h.desc}</div></div>`;
+    html += `<div class="card"><div class="card-main"><b>${WB.t(h.name)}</b> <span class="tag">x${h.mult} ${WB.t("income")}</span><div class="muted">${WB.t(h.desc)}</div></div>`;
     if (next) {
       const cost = G.housingCost();
-      html += `<button class="btn buy ${st.money >= cost ? "" : "locked"}" data-act="housing">Move to ${next.name}<span class="cost">${WB.fmt(cost, true)}</span></button>`;
+      html += `<button class="btn buy ${st.money >= cost ? "" : "locked"}" data-act="housing">${WB.t("Move to")} ${WB.t(next.name)}<span class="cost">${WB.fmt(cost, true)}</span></button>`;
     } else html += `<span class="tag gold">MAX</span>`;
     html += `</div><div class="section-title">🛠️ Equipment</div>`;
     Object.entries(D.EQUIPMENT).forEach(([key, eq]) => {
       const t = st.equipment[key];
-      const cur = t >= 0 ? eq.tiers[t].name : "None";
+      const cur = t >= 0 ? eq.tiers[t].name : WB.t("None");
       const cost = G.equipCost(key);
-      const effTxt = { income: `+${Math.round(eq.val * 100)}% income/tier`, xp: `+${Math.round(eq.val * 100)}% XP/tier`, energy: `-${Math.round(eq.val * 100)}% energy drain/tier`, click: `+${Math.round(eq.val * 100)}% click/tier` }[eq.effect];
-      html += `<div class="card"><div class="card-main"><b>${eq.icon} ${eq.label}</b> <span class="tag">${cur}</span><div class="muted">${effTxt}</div></div>`;
+      const effTxt = { income: `+${Math.round(eq.val * 100)}% ${WB.t("income/tier")}`, xp: `+${Math.round(eq.val * 100)}% ${WB.t("XP/tier")}`, energy: `-${Math.round(eq.val * 100)}% ${WB.t("energy drain/tier")}`, click: `+${Math.round(eq.val * 100)}% ${WB.t("click/tier")}` }[eq.effect];
+      html += `<div class="card"><div class="card-main"><b>${eq.icon} ${WB.t(eq.label)}</b> <span class="tag">${cur}</span><div class="muted">${effTxt}</div></div>`;
       if (cost !== null) {
         html += `<button class="btn buy ${st.money >= cost ? "" : "locked"}" data-act="equip" data-key="${key}">${eq.tiers[t + 1].name}<span class="cost">${WB.fmt(cost, true)}</span></button>`;
       } else html += `<span class="tag gold">MAX</span>`;
@@ -520,15 +534,15 @@ WB.UI = (function () {
     let html = "";
     Object.entries(D.CAREERS).forEach(([key, c]) => {
       const t = st.careers[key];
-      const cur = t >= 0 ? c.tiers[t].name : "Not started";
+      const cur = t >= 0 ? WB.t(c.tiers[t].name) : WB.t("Not started");
       const next = c.tiers[t + 1];
-      html += `<div class="card col"><div class="career-head"><b>${c.icon} ${c.name}</b><span class="tag">${cur}${t >= 0 ? ` — ${WB.fmt(c.tiers[t].income, true)}/s base` : ""}</span></div>`;
-      html += `<div class="career-path muted">${c.tiers.map((x, i) => i <= t ? `<b class="done">${x.name}</b>` : x.name).join(" → ")}</div>`;
+      html += `<div class="card col"><div class="career-head"><b>${c.icon} ${WB.t(c.name)}</b><span class="tag">${cur}${t >= 0 ? ` — ${WB.fmt(c.tiers[t].income, true)}/s` : ""}</span></div>`;
+      html += `<div class="career-path muted">${c.tiers.map((x, i) => i <= t ? `<b class="done">${WB.t(x.name)}</b>` : WB.t(x.name)).join(" → ")}</div>`;
       if (next) {
         const chk = G.canAdvanceCareer(key);
         const cost = G.careerCost(key);
         html += `<button class="btn buy wide ${chk.ok ? "" : "locked"}" data-act="career" data-key="${key}">
-          ${t >= 0 ? "Advance to" : "Start as"} ${next.name}<span class="cost">${WB.fmt(cost, true)}</span></button>`;
+          ${WB.t(t >= 0 ? "Advance to" : "Start as")} ${WB.t(next.name)}<span class="cost">${WB.fmt(cost, true)}</span></button>`;
         if (!chk.ok) html += `<div class="req muted">🔒 ${chk.reason}</div>`;
       } else html += `<span class="tag gold">PATH MASTERED</span>`;
       if (key === "crypto" && t >= 0) {
@@ -548,13 +562,13 @@ WB.UI = (function () {
       const x = st.skills[key];
       const need = G.xpForLevel(x.level);
       const pct = Math.min(100, x.xp / need * 100);
-      html += `<div class="skill-row"><span class="skill-name">${sk.icon} ${sk.name}</span><span class="skill-lvl">Lv ${x.level}</span>
+      html += `<div class="skill-row"><span class="skill-name">${sk.icon} ${WB.t(sk.name)}</span><span class="skill-lvl">Lv ${x.level}</span>
         <div class="bar"><div class="fill skill" style="width:${pct}%"></div></div></div>`;
     });
     html += `<div class="section-title">🎭 Traits</div><div class="chips">`;
-    html += st.traits.length ? st.traits.map(t => { const tr = D.TRAITS[t]; return `<span class="chip" title="${tr.desc}">${tr.icon} ${tr.name}</span>`; }).join("") : `<span class="muted">No traits yet. Live a little — personality develops from behavior.</span>`;
+    html += st.traits.length ? st.traits.map(t => { const tr = D.TRAITS[t]; return `<span class="chip" title="${WB.t(tr.desc)}">${tr.icon} ${WB.t(tr.name)}</span>`; }).join("") : `<span class="muted">No traits yet. Live a little — personality develops from behavior.</span>`;
     html += `</div><div class="section-title">✨ Perks</div><div class="chips">`;
-    html += st.perks.length ? st.perks.map(id => { const p = D.PERKS.find(x => x.id === id); return `<span class="chip" title="${p.desc}">${p.icon} ${p.name}</span>`; }).join("") : `<span class="muted">Perks unlock every 3 character levels.</span>`;
+    html += st.perks.length ? st.perks.map(id => { const p = D.PERKS.find(x => x.id === id); return `<span class="chip" title="${WB.t(p.desc)}">${p.icon} ${WB.t(p.name)}</span>`; }).join("") : `<span class="muted">Perks unlock every 3 character levels.</span>`;
     html += `</div>`;
     return html;
   }
@@ -595,7 +609,7 @@ WB.UI = (function () {
       ["Prestige count", st.prestige.count],
       ["Legacy points", `${st.prestige.legacy - st.prestige.spent} available / ${st.prestige.legacy} total`],
     ];
-    return `<div class="stats-list">${rows.map(([k, v]) => `<div class="stat-row"><span>${k}</span><b>${v}</b></div>`).join("")}</div>`;
+    return `<div class="stats-list">${rows.map(([k, v]) => `<div class="stat-row"><span>${WB.t(k)}</span><b>${v}</b></div>`).join("")}</div>`;
   }
 
   function tabPrestige() {
@@ -612,7 +626,7 @@ WB.UI = (function () {
     D.PRESTIGE_UPGRADES.forEach(u => {
       const lvl = st.prestige.upgrades[u.id] || 0;
       const cost = G.prestigeUpgradeCost(u.id);
-      html += `<div class="card"><div class="card-main"><b>${u.icon} ${u.name}</b> <span class="tag">Lv ${lvl}/${u.max}</span><div class="muted">${u.desc}</div></div>`;
+      html += `<div class="card"><div class="card-main"><b>${u.icon} ${WB.t(u.name)}</b> <span class="tag">Lv ${lvl}/${u.max}</span><div class="muted">${WB.t(u.desc)}</div></div>`;
       if (cost !== null) html += `<button class="btn buy ${avail >= cost ? "" : "locked"}" data-act="pupgrade" data-key="${u.id}">Upgrade<span class="cost">${cost} LP</span></button>`;
       else html += `<span class="tag gold">MAX</span>`;
       html += `</div>`;
@@ -716,12 +730,12 @@ WB.UI = (function () {
       html += `
         <div class="crime-card ${el.ok ? "" : "locked"}">
           <div class="crime-card-head"><span class="crime-ico">${cr.icon}</span>
-            <span class="risk-pill" style="--rp:${riskCol}">${chance === null ? "🧼 −heat" : chance + "% risk"}</span></div>
-          <b class="crime-name">${cr.name}</b>
+            <span class="risk-pill" style="--rp:${riskCol}">${chance === null ? "🧼 −" + WB.t("heat") : chance + "% " + WB.t("risk")}</span></div>
+          <b class="crime-name">${WB.t(cr.name)}</b>
           <div class="crime-desc">${crimeDescCache[cr.id]}</div>
-          <div class="crime-meta">${cr.sentence ? `⛓️ ${WB.fmtTime(cr.sentence)} if caught` : "Washes your dirty reputation"}</div>
+          <div class="crime-meta">${cr.sentence ? `⛓️ ${WB.fmtTime(cr.sentence)} ${WB.t("if caught")}` : WB.t("Washes your dirty reputation")}</div>
           ${el.ok
-            ? `<button class="btn crime-btn ${jailed ? "locked" : ""}" data-act="crime" data-key="${cr.id}">${cr.launder ? "🧼 Launder" : "Commit"}</button>`
+            ? `<button class="btn crime-btn ${jailed ? "locked" : ""}" data-act="crime" data-key="${cr.id}">${WB.t(cr.launder ? "🧼 Launder" : "Commit")}</button>`
             : `<div class="crime-lock">🔒 ${el.why}</div>`}
         </div>`;
     });
@@ -736,20 +750,20 @@ WB.UI = (function () {
     let html = `
       <div class="empire-hero">
         <div class="empire-hero-top"><b>🪐 The Empire</b><span class="empire-rank">👑 ${rk.title}</span></div>
-        <div class="empire-sub">${WB.fmt(E.income(), true)}/s base from ${rk.owned}/${rk.total} acquisitions — multiplied by everything you already own.</div>
+        <div class="empire-sub">${WB.fmt(E.income(), true)}/s ${WB.t("flat income from")} ${rk.owned}/${rk.total} ${WB.t("acquisitions — an empire pays rent, it doesn't print.")}</div>
       </div>`;
     E.VENTURES.forEach(v => {
       const stage = E.stageOf(v.id);
       const next = E.nextStage(v.id);
       html += `<div class="card col empire-venture">
         <div class="career-head"><b>${v.icon} ${v.name}</b><span class="tag">${stage + 1}/${v.stages.length}</span></div>
-        <div class="muted" style="margin-top:-2px">${v.tagline}</div>
+        <div class="muted" style="margin-top:-2px">${WB.t(v.tagline)}</div>
         <div class="career-path muted">${v.stages.map((x2, i) => i <= stage ? `<b class="done">${x2.name}</b>` : x2.name).join(" → ")}</div>
         ${stage >= 0 ? `<div class="empire-flavor">“${v.stages[stage].flavor}”</div>` : ""}
         ${next
           ? `<button class="btn buy wide ${st.money >= next.cost ? "" : "locked"}" data-act="venture" data-key="${v.id}">
               ${next.cutscene ? "🎬 " : ""}${next.name}<span class="cost">${WB.fmt(next.cost, true)}</span></button>
-            <div class="req muted">+${WB.fmt(next.income, true)}/s base income</div>`
+            <div class="req muted">+${WB.fmt(next.income, true)}/s ${WB.t("flat income")} · ${WB.t("pays itself back in")} ${WB.fmtTime(next.cost / next.income)}</div>`
           : `<span class="tag gold">EMPIRE COMPLETE</span>`}
       </div>`;
     });
@@ -851,9 +865,19 @@ WB.UI = (function () {
     const c = WB.CRIME ? WB.CRIME.crimeState() : { timesCaught: 0 };
     return (3 + (c.timesCaught % 6)) + "" + "ABC"[c.timesCaught % 3];
   }
+  // where does he live right now? Empire space stages move him off-planet
+  function homeName() {
+    const st2 = WB.EMPIRE ? WB.EMPIRE.stageOf("space") : -1;
+    if (st2 >= 6) return "🔴 " + WB.t("Mars Colony");
+    if (st2 >= 4) return "🌕 " + WB.t("Lunar Base Alpha");
+    return WB.t(D.HOUSING[st.housing].name);
+  }
   let wasJailed = null;
   function renderStatus() {
-    const jailed = WB.CRIME && WB.CRIME.inPrison();
+    // during the arrest/release cutscenes the room is a movie set — the jail
+    // chrome (bars, badges) waits until the cutscene lands you in the cell
+    const inCut = WB.ROOM && WB.ROOM.cutActive && WB.ROOM.cutActive();
+    const jailed = WB.CRIME && WB.CRIME.inPrison() && !inCut;
     const panel = $("char-panel"), room = $("room-wrap");
     if (jailed !== wasJailed) { // toggle classes only on change for clean CSS transitions
       wasJailed = jailed;
@@ -862,6 +886,7 @@ WB.UI = (function () {
       $("cell-badge").style.display = jailed ? "" : "none";
       if (jailed) $("cell-badge").textContent = "🔒 CELL " + cellNumber();
     }
+    if (inCut) return; // cutscene owns the screen; keep last status text
     if (jailed) {
       const c = WB.CRIME.crimeState();
       $("status-icon").textContent = "🚔";
@@ -874,14 +899,14 @@ WB.UI = (function () {
       $("status-icon").textContent = "🚽";
       $("status-label").textContent = WB.t("Bathroom Break");
       $("status-sub").textContent = WB.t("very important business");
-      $("housing-name").textContent = D.HOUSING[st.housing].name;
+      $("housing-name").textContent = homeName();
       return;
     }
     const [icon, label, sub2] = STATUS_BY_FOCUS[st.focus] || ["💼", "Hustling", "doing entrepreneur things"];
     $("status-icon").textContent = icon;
     $("status-label").textContent = WB.t(label);
     $("status-sub").textContent = st.project ? `"${st.project.name}" · ${WB.t(sub2)}` : WB.t(sub2);
-    $("housing-name").textContent = D.HOUSING[st.housing].name;
+    $("housing-name").textContent = homeName();
   }
   function renderHud() {
     const G = WB.GAME, r = st.res;
@@ -894,7 +919,7 @@ WB.UI = (function () {
     lastMoney = money;
     $("ips").textContent = WB.fmt(G.incomePerSec(), true) + "/sec";
     const e = D.ERAS[st.era];
-    $("era-badge").textContent = `${e.year} · ${e.name}`;
+    $("era-badge").textContent = `${e.year} · ${WB.t(e.name)}`;
     const boost = Date.now() < st.boost.until;
     $("boost-badge").style.display = boost ? "" : "none";
     if (boost) $("boost-badge").textContent = `🔥 x${st.boost.mult} for ${Math.ceil((st.boost.until - Date.now()) / 1000)}s`;
@@ -913,7 +938,7 @@ WB.UI = (function () {
 
     // Goal
     const goal = D.GOALS[st.goalIndex];
-    $("goal-text").textContent = goal ? goal.text : "All goals complete. You are the goal now.";
+    $("goal-text").textContent = goal ? WB.t(goal.text) : WB.t("All goals complete. You are the goal now.");
 
     // Project
     const p = st.project;
@@ -945,7 +970,7 @@ WB.UI = (function () {
     if (WB.CRIME && getSetting("showHeat") && WB.CRIME.heat() > 1) {
       const h = Math.round(WB.CRIME.heat());
       heatPill.style.display = "";
-      heatPill.textContent = `🌡️ Heat ${h}`;
+      heatPill.textContent = `🌡️ ${WB.t("Heat")} ${h}`;
       heatPill.style.color = h > 60 ? "var(--red)" : h > 30 ? "var(--gold)" : "var(--green)";
     } else heatPill.style.display = "none";
     renderPrisonBanner();
@@ -1009,7 +1034,7 @@ WB.UI = (function () {
 
   // ---------- Category popover: the direct actions ----------
   function rowInfo({ id, def, st: a }) {
-    let sub = def.desc, chip = "▶ " + WB.t("Start"), pct = 0;
+    let sub = WB.t(def.desc), chip = "▶ " + WB.t("Start"), pct = 0;
     if (a.state === "running") { sub = WB.t("working…"); chip = "⏳ " + a.label; pct = a.pct; }
     else if (a.state === "done") { sub = WB.t("Results are in!"); chip = "📬 " + WB.t("Collect"); pct = 100; }
     else if (a.state === "cooldown") { sub = WB.t("recharging…"); chip = "🕒 " + a.label; }
@@ -1137,14 +1162,15 @@ WB.UI = (function () {
   function showPrison() { /* banner is rendered every HUD tick when jailed */ }
   function hidePrison() { const b = $("prison-banner"); if (b) b.style.display = "none"; }
   function renderPrisonBanner() {
-    const jailed = WB.CRIME && WB.CRIME.inPrison();
+    const inCut = WB.ROOM && WB.ROOM.cutActive && WB.ROOM.cutActive();
+    const jailed = WB.CRIME && WB.CRIME.inPrison() && !inCut;
     let b = $("prison-banner");
     if (!jailed) { if (b) b.remove(); return; }
     if (!b) { // built once; only the text nodes update, so the button never flickers
       b = document.createElement("div");
       b.id = "prison-banner";
       b.innerHTML = `<span id="prison-count"></span><button id="prison-bail"></button>`;
-      $("room-wrap").appendChild(b);
+      $("room-frame").appendChild(b);
       $("prison-bail").onclick = () => WB.CRIME.postBail();
     }
     $("prison-count").textContent = "⏳ " + WB.fmtTime(WB.CRIME.prisonLeft() / 1000);

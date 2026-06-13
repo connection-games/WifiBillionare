@@ -139,7 +139,6 @@ WB.GAME = (function () {
   function incomePerSec() {
     if (!s) return 0;
     let inc = careerBaseIncome();
-    inc += WB.EMPIRE ? WB.EMPIRE.income() : 0; // endgame ventures, scaled by everything below
     inc *= speedMult();
     inc *= D.HOUSING[s.housing].mult;
     inc *= equipIncomeMult();
@@ -153,6 +152,9 @@ WB.GAME = (function () {
     inc *= Math.max(0.5, 1 - afx.salaryPct); // staff salaries come off the top
     inc *= 1 + 0.25 * pup("legacyincome");
     if (s.money < 10000 && pup("faststart")) inc *= 1 + 0.5 * pup("faststart");
+    // EMPIRE pays FLAT rent — planets don't compound with your gaming chair.
+    // (Pre-6.2 it multiplied with era/housing/etc and printed near-infinite money.)
+    inc += (WB.EMPIRE ? WB.EMPIRE.income() : 0) * speedMult();
     if (Date.now() < s.boost.until) inc *= s.boost.mult;
     if (s.res.energy <= 0) inc *= 0.3;
     if (inPrison()) inc *= 0.5; // your operation runs at half speed from a cell
@@ -355,6 +357,7 @@ WB.GAME = (function () {
     if (next < D.ERAS.length && s.allTimeEarnings >= D.ERAS[next].req) {
       s.era = next;
       const e = D.ERAS[next];
+      if (WB.ROOM && WB.ROOM.playCard) WB.ROOM.playCard(WB.t("THE WORLD HAS CHANGED"), `${e.year} — ${WB.t(e.name)}`, 3000);
       UI.toast(`🗓️ THE WORLD HAS CHANGED — Welcome to ${e.year}: ${e.name}! All income x${e.mult}. ${e.desc}`, "era");
       UI.confetti();
       UI.bubble(WB.THOUGHTS.react("era" + next) || "New era, new hustle.");
@@ -534,6 +537,7 @@ WB.GAME = (function () {
     if (kh > 0) Object.keys(s.equipment).forEach(k => {
       s.equipment[k] = Math.max(s.equipment[k], Math.min(kh - 1, D.EQUIPMENT[k].tiers.length - 1));
     });
+    if (WB.ROOM && WB.ROOM.playCard) WB.ROOM.playCard(WB.t("LIFE") + " №" + (s.prestige.count + 1), WB.t("same bedroom. more knowledge."), 3200);
     UI.toast(`♻️ REBIRTH #${s.prestige.count}! +${gain} Legacy Points. The grind begins anew — but stronger.`, "era");
     UI.confetti();
     UI.bubble("Back to mom's bedroom. But this time... I know things.");

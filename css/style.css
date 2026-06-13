@@ -84,13 +84,22 @@ b { font-weight: 600; }
   flex: 1.25; display: flex; flex-direction: column; min-width: 0;
   padding: 18px; gap: 12px; position: relative;
 }
+/* room-wrap measures the available space; room-frame inside it is ALWAYS a
+   perfect 16:9 box (the canvas ratio), so the pixel scene fills it edge to
+   edge — no letterbox bars, ever. */
 #room-wrap {
   position: relative; flex: 1; min-height: 0;
+  container-type: size;
+}
+#room-frame {
+  position: relative; margin: 0 auto;
+  width: min(100%, calc(100cqh * 16 / 9));
+  aspect-ratio: 16 / 9;
   background: #0c0e13; border-radius: var(--radius); overflow: hidden;
   box-shadow: var(--shadow-md);
 }
 #room-canvas {
-  width: 100%; height: 100%; display: block; object-fit: contain;
+  width: 100%; height: 100%; display: block;
   image-rendering: pixelated; image-rendering: crisp-edges;
 }
 #housing-name {
@@ -228,14 +237,16 @@ b { font-weight: 600; }
 #char-panel.jailed .cbadge, #char-panel.jailed .cchip { background: #25272b; border-color: #55585e; color: #b9bdc6; }
 #char-panel.jailed .bar { background: #1f2125; }
 
-/* room frame in prison: stone tint + heavy bars */
-#room-wrap { transition: box-shadow 0.5s ease; }
-#room-wrap.jailed { box-shadow: 0 0 0 3px #54575e, var(--shadow-md); }
-#room-wrap.jailed::after {
-  content: ""; position: absolute; inset: 0; pointer-events: none; z-index: 4;
+/* room frame in prison: stone tint + heavy bars (on the frame, never on text) */
+#room-frame { transition: box-shadow 0.5s ease; }
+#room-wrap.jailed #room-frame { box-shadow: 0 0 0 3px #54575e, var(--shadow-md); }
+#room-wrap.jailed #room-frame::after {
+  content: ""; position: absolute; inset: 0; pointer-events: none; z-index: 2;
   background: repeating-linear-gradient(90deg, rgba(8, 9, 11, 0.82) 0 12px, transparent 12px 78px);
   box-shadow: inset 0 14px 30px rgba(0, 0, 0, 0.55);
 }
+/* every text overlay sits ABOVE the bars — bars must never cross text */
+#housing-name, #project-box, #prison-banner { z-index: 6; }
 #room-wrap.jailed #housing-name { background: rgba(20, 21, 24, 0.85); color: #ffd60a; font-weight: 700; }
 
 .bar { height: 6px; background: #ececf0; border-radius: 3px; overflow: hidden; }
@@ -1134,7 +1145,7 @@ html[data-theme="dark"] .crime-btn:hover { background: rgba(41, 151, 255, 0.24);
 .tut-dots i.on { background: var(--accent); width: 16px; border-radius: 999px; }
 
 /* ---------- Jail polish: bars only on the room, slick banner ---------- */
-#room-wrap.jailed::after {
+#room-wrap.jailed #room-frame::after {
   background: repeating-linear-gradient(90deg, rgba(8, 9, 11, 0.7) 0 9px, transparent 9px 84px);
   box-shadow: inset 0 12px 26px rgba(0, 0, 0, 0.45);
 }

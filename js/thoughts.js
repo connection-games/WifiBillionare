@@ -17,6 +17,7 @@ WB.THOUGHTS = (function () {
     excuse: ["it works on my machine", "it's a feature", "the requirements changed", "mercury is in retrograde", "the intern did it", "legacy code"],
   };
   function fill(t) {
+    t = WB.t ? WB.t(t) : t; // translate the TEMPLATE first — slots fill after
     return t.replace(/\{(\w+)\}/g, (m, k) => FILL[k] ? WB.pick(FILL[k]) : m);
   }
 
