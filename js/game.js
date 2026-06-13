@@ -512,12 +512,16 @@ WB.GAME = (function () {
     UI.bubble(WB.THOUGHTS.react(f) || "");
   }
   function hustle() {
-    if (inPrison()) return 0;
-    const v = clickValue();
+    if (inPrison()) return { value: 0, crit: false };
+    let v = clickValue();
+    // 🍀 Lucky crit — rare, modest, scales gently with luck. Pure delight;
+    // clicking is a minor income source so the economy impact is negligible.
+    const crit = WB.chance(Math.min(0.13, 0.04 + luck() * 0.0015));
+    if (crit) { v *= WB.rand(4, 7); s.stats.critClicks = (s.stats.critClicks || 0) + 1; }
     earn(v);
     s.stats.totalClicks++;
     gainXp("business", 1.5);
-    return v;
+    return { value: v, crit };
   }
 
   // ---------- 💩 Poop + 🧹 cleaning ----------

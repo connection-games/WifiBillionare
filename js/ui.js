@@ -179,6 +179,11 @@ WB.UI = (function () {
   }
   let settingsTab = "general";
   const UPDATES = [
+    { v: "v6.4.1 — Feel Good", items: [
+      "💥 NEW: lucky CRIT clicks! Every hustle has a small chance to pay out 4–7× with a golden burst — track your luck in Stats.",
+      "✨ Juicier feedback: floating cash pops and springs, and the Hustle button now bounces and flashes when you smash it.",
+      "🐛 Stability pass: bug sweep across the new online & cutscene systems — no crashes, cleaner Swedish.",
+    ]},
     { v: "v6.4 — The Online Update", items: [
       "👥 NEW: real friends! Add players by username, accept requests, and chat in real-time.",
       "🤝 NEW: send money to a friend, or ⚖️ bail them out of jail — it lands in their wallet instantly.",
@@ -771,6 +776,7 @@ WB.UI = (function () {
       ["Era", `${D.ERAS[st.era].year} — ${D.ERAS[st.era].name} (x${D.ERAS[st.era].mult})`],
       ["Play time", WB.fmtTime(x.playTimeSec)],
       ["Hustle clicks", x.totalClicks.toLocaleString()],
+      ["💥 Lucky crits", (x.critClicks || 0).toLocaleString()],
       ["Projects shipped / flopped", `${x.projectsShipped} / ${x.projectsFailed}`],
       ["Viral hits", x.viralProjects],
       ["Followers", WB.fmt(x.followers)],
@@ -1670,14 +1676,15 @@ WB.UI = (function () {
     if ($("prison-bail").textContent !== bail) $("prison-bail").textContent = bail;
   }
 
-  function floatMoney(val, x, y) {
+  function floatMoney(val, x, y, crit) {
     const el = document.createElement("div");
-    el.className = "float-money";
-    el.textContent = "+" + WB.fmt(val, true);
+    el.className = "float-money" + (crit ? " crit" : "");
+    el.textContent = (crit ? "💥 +" : "+") + WB.fmt(val, true);
     el.style.left = x + "px";
     el.style.top = y + "px";
+    el.style.setProperty("--drift", WB.rand(-10, 10) + "deg");
     $("scene").appendChild(el);
-    setTimeout(() => el.remove(), 1100);
+    setTimeout(() => el.remove(), crit ? 1400 : 1100);
   }
 
   // ---------- 💩 The poop decision ----------
@@ -1753,9 +1760,12 @@ WB.UI = (function () {
         showAutoclickerEgg();
         return;
       }
-      const v = WB.GAME.hustle();
+      const r = WB.GAME.hustle();
       const rect = $("scene").getBoundingClientRect();
-      floatMoney(v, e.clientX - rect.left + WB.rand(-12, 12), e.clientY - rect.top - 14);
+      floatMoney(r.value, e.clientX - rect.left + WB.rand(-12, 12), e.clientY - rect.top - 14, r.crit);
+      const btn = $("hustle-btn");
+      btn.classList.remove("pop"); void btn.offsetWidth; btn.classList.add("pop");
+      if (r.crit) { btn.classList.remove("crit-flash"); void btn.offsetWidth; btn.classList.add("crit-flash"); }
     });
 
     $("settings-btn").addEventListener("click", showSettings);

@@ -351,7 +351,7 @@ WB.I18N = (function () {
     "if caught": "om du åker fast", "heat": "hetta", "risk": "risk",
     // ---- stats rows ----
     "Net worth": "Nettoförmögenhet", "Income": "Inkomst", "Lifetime earnings (this life)": "Intjänat (detta liv)",
-    "All-time earnings": "Intjänat totalt", "Era": "Era", "Play time": "Speltid", "Hustle clicks": "Hustleklick",
+    "All-time earnings": "Intjänat totalt", "Era": "Era", "Play time": "Speltid", "Hustle clicks": "Hustleklick", "💥 Lucky crits": "💥 Turträffar",
     "Projects shipped / flopped": "Projekt skeppade / floppade", "Viral hits": "Virala hits", "Followers": "Följare",
     "Crypto P/L": "Krypto V/F", "Events experienced": "Händelser upplevda", "Mom interruptions": "Mamma-avbrott",
     "Times slept": "Gånger sovit", "Grass touched": "Gräs rört", "Reputation": "Rykte", "Intelligence": "Intelligens",

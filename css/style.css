@@ -133,10 +133,25 @@ b { font-weight: 600; }
 
 .float-money {
   position: absolute; color: var(--green-bright); font-weight: 800; font-size: 16px;
-  pointer-events: none; animation: floatup 1.1s ease-out forwards; z-index: 20;
-  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.25);
+  pointer-events: none; animation: floatup 1.1s cubic-bezier(.25, .8, .35, 1) forwards; z-index: 20;
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.25); will-change: transform, opacity;
 }
-@keyframes floatup { to { transform: translateY(-70px); opacity: 0; } }
+@keyframes floatup {
+  0%   { transform: translateY(0) scale(.78) rotate(var(--drift, 0deg)); opacity: 0; }
+  16%  { transform: translateY(-7px) scale(1.1) rotate(0deg); opacity: 1; }
+  100% { transform: translateY(-72px) scale(1); opacity: 0; }
+}
+.float-money.crit {
+  color: #ffd60a; font-size: 25px; font-weight: 900; letter-spacing: .3px;
+  text-shadow: 0 0 14px rgba(255, 200, 0, .65), 0 2px 4px rgba(0, 0, 0, .4);
+  animation: floatup-crit 1.4s cubic-bezier(.2, .85, .3, 1) forwards;
+}
+@keyframes floatup-crit {
+  0%   { transform: translateY(0) scale(.5) rotate(var(--drift, 0deg)); opacity: 0; }
+  18%  { transform: translateY(-12px) scale(1.32) rotate(0deg); opacity: 1; }
+  46%  { transform: translateY(-30px) scale(1.05); opacity: 1; }
+  100% { transform: translateY(-96px) scale(1); opacity: 0; }
+}
 
 /* ---------- Actions bar ---------- */
 #actions-bar { display: flex; gap: 8px; flex-wrap: wrap; }
@@ -190,6 +205,13 @@ b { font-weight: 600; }
 }
 #hustle-btn:hover { filter: brightness(1.06); }
 #hustle-btn:active { transform: scale(0.95); }
+#hustle-btn.pop { animation: hustlePop .19s ease; }
+@keyframes hustlePop { 0% { transform: scale(.9); } 55% { transform: scale(1.045); } 100% { transform: scale(1); } }
+#hustle-btn.crit-flash { animation: hustleCrit .45s ease-out; }
+@keyframes hustleCrit {
+  0%   { box-shadow: 0 6px 18px rgba(0, 113, 227, 0.35), 0 0 0 0 rgba(255, 214, 10, .7); }
+  100% { box-shadow: 0 6px 18px rgba(0, 113, 227, 0.35), 0 0 0 22px rgba(255, 214, 10, 0); }
+}
 #hustle-val { font-size: 11px; font-weight: 600; opacity: 0.85; }
 
 /* ---------- Character status panel (living UI) ---------- */
