@@ -179,6 +179,11 @@ WB.UI = (function () {
   }
   let settingsTab = "general";
   const UPDATES = [
+    { v: "v6.2.1 — Install Fix", items: [
+      "🛡️ FIXED: macOS no longer says the app is \"damaged\" — every build is now ad-hoc code-signed, so the whole bundle is sealed properly (Apple Silicon was rejecting the old unsigned bundle outright).",
+      "💿 Gorgeous new DMG: glowing brand mark, 'drag to install' arrow, and a first-launch hint — plus a polished Windows installer to match.",
+      "🧹 First launch is now just right-click → Open, once; every in-app update after that is seamless.",
+    ]},
     { v: "v6.2 — The Polish & Planets Update", items: [
       "🌕 NEW ENVIRONMENTS: own a Lunar Base and your room MOVES to the Moon (Mars Colony upgrades it again — portholes, $ flag, low-gravity dust).",
       "🎬 New cutscenes: walk free from jail at sunrise, '5 BILLION HOURS LATER…' narrator cards on offline returns, era changes and rebirth.",

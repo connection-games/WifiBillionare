@@ -19,14 +19,13 @@ All versions: [**Releases page**](https://github.com/connection-games/WifiBillio
 ### Install on macOS
 1. Open the `.dmg` and follow the arrow — drag **WiFi Billionaire** onto **Applications**
    (or unzip the `.zip` and do the same).
-2. **First launch only:** the app isn't notarized by Apple yet, so macOS may claim it is
-   "damaged" or from an unidentified developer (it isn't — that's just Gatekeeper on
-   unsigned apps). Fix it with one Terminal command, then open normally:
-   ```bash
-   xattr -cr "/Applications/WiFi Billionaire.app"
-   ```
-   (Or: System Settings → Privacy & Security → **Open Anyway**.) This is only ever
-   needed once — updates installed by the app itself never trigger it again.
+2. **First launch only:** right-click (or Control-click) the app in Applications and choose
+   **Open**, then click **Open** again in the dialog. The app is ad-hoc code-signed, so it
+   won't say "damaged" — macOS just asks once because it isn't notarized by Apple. After
+   that it opens normally, and every in-app update afterward is completely seamless.
+
+   > If macOS ever still blocks it: System Settings → Privacy & Security → **Open Anyway**,
+   > or run `xattr -cr "/Applications/WiFi Billionaire.app"` once in Terminal.
 
 ### Install on Windows
 Run `WiFiBillionaireSetup.exe` → Next → done. SmartScreen may warn on first install —
@@ -58,15 +57,27 @@ npm run dist:win       # build dist/WiFiBillionaireSetup.exe    (run on Windows)
 
 
 ### Installer branding
-The mac DMG ships a branded retina background (navy/green/gold, matching the
-app icon) with a "drag here to install" guide arrow; the Windows installer uses
-matching sidebar/header artwork. Regenerate the artwork with:
+The mac DMG ships a branded retina background (640×470, navy/green/gold matching
+the app icon) with glowing brand mark, a "drag to install" guide arrow, and a
+first-launch hint pill; the Windows installer uses matching sidebar/header art.
+Regenerate the artwork (macOS, no extra deps) with:
 ```bash
 cd build && swift make-installer-assets.swift . \
   && tiffutil -cathidpicheck dmg-bg.png dmg-bg@2x.png -out dmg-background.tiff \
   && sips -s format bmp installerSidebar.png --out installerSidebar.bmp \
   && sips -s format bmp installerHeader.png --out installerHeader.bmp
 ```
+
+### Why the app no longer says "damaged" (ad-hoc signing)
+electron-builder with `mac.identity: null` skips signing, leaving only Electron's
+per-binary linker stub — so the **whole** `.app` bundle has no coherent signature.
+On Apple Silicon, a quarantined download with that broken state is reported by
+macOS as **"damaged and can't be opened"** (a dead end). The `build/after-pack.js`
+hook fixes this: after each macOS build it runs `codesign --force --deep --sign -`
+(an *ad-hoc* signature, no certificate needed) and verifies it, sealing the bundle
+coherently. That downgrades the fatal "damaged" error to the normal, one-time
+"unidentified developer" prompt (right-click → **Open**). Proper notarization would
+remove even that, but needs a paid Apple Developer ID.
 
 ### Future updates
 1. Make changes, bump the version in `package.json` **and** `WB.VERSION` in `js/data.js` (e.g. `6.0.1`).
@@ -81,7 +92,9 @@ restarts itself, and the **changelog pops up** on the first open of the new vers
 - **Windows:** electron-updater downloads the NSIS package and silently reinstalls + restarts.
 - **macOS:** unsigned apps can't use Apple's update path, so the app updates itself —
   it downloads `WiFi-Billionaire.zip`, verifies the release's sha512 checksum, swaps
-  the `.app` bundle in place, and relaunches. No Gatekeeper prompt, saves untouched.
+  the ad-hoc-signed `.app` bundle in place via `ditto`/`mv`, and relaunches. Because
+  `ditto` extraction sets no quarantine flag, **updates never re-trigger Gatekeeper** —
+  the one-time "Open" is only ever needed on the very first manual install.
 
 ### Auto-update testing
 - Auto-update only runs in the **packaged** app (skipped in `npm start`).
