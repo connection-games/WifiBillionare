@@ -85,6 +85,7 @@ WB.I18N = (function () {
     "Loading…": "Laddar…", "Looking for updates…": "Letar efter uppdateringar…",
     "You’re up to date ✓": "Du har senaste versionen ✓",
     "Installing — restarting…": "Installerar — startar om…",
+    "Couldn’t check for updates — playing offline": "Kunde inte söka uppdateringar — spelar offline",
     "What's New": "Vad är nytt",
     "The game updated itself while you weren't looking. Here's the loot:": "Spelet uppdaterade sig självt medan du tittade bort. Här är bytet:",
     "Let's go!": "Nu kör vi!",

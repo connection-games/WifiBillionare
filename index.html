@@ -240,8 +240,10 @@
               upToDate();
               break;
             case 'error':
-              // can't reach GitHub etc. — just play; not fatal
-              upToDate();
+              // can't reach GitHub etc. — not fatal, but say so honestly
+              setStatus('Couldn’t check for updates — playing offline');
+              $('boot-spin').classList.add('ok');
+              setTimeout(dismiss, 900);
               break;
           }
         });
