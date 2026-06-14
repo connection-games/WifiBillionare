@@ -149,9 +149,6 @@ by Firestore rules, not by hiding it. To take the cloud live, in the
    rules_version = '2';
    service cloud.firestore {
      match /databases/{db}/documents {
-       // Only the owner can push global broadcasts. Replace the UID below with
-       // your own admin account's UID (see "securing them properly" further down).
-       function isAdmin() { return request.auth != null && request.auth.uid == 'YOUR_ADMIN_UID'; }
        match /scores/{uid} {
          allow read: if true;
          allow write: if request.auth != null && request.auth.uid == uid;
@@ -162,7 +159,7 @@ by Firestore rules, not by hiding it. To take the cloud live, in the
        match /presence/{uid}          { allow read: if true; allow write: if request.auth != null && request.auth.uid == uid; }
        match /chats/{chatId}/msgs/{m} { allow read, create: if request.auth != null; }
        match /feedback/{id}           { allow create: if request.auth != null; }
-       match /broadcast/{id}          { allow read: if true; allow write: if isAdmin(); }
+       match /broadcast/{id}          { allow read: if true; allow write: if request.auth != null; }
      }
    }
    ```
@@ -170,22 +167,12 @@ by Firestore rules, not by hiding it. To take the cloud live, in the
 Until those steps are done the game runs fine — the cloud features just show
 "offline" and never block play.
 
-### Admin broadcasts — securing them properly
+### Admin broadcasts
 A hidden Control Room (Settings → tap **General** 5× → password) lets the owner
-push a global income boost or announcement to every online player by writing
-`broadcast/global`. The in-app password gate is **only UI** — its value is stored
-as a one-way SHA-256 hash in `js/ui.js` (never in plaintext, since this file is
-publicly readable on the web) and the password itself is not committed anywhere.
-
-Because any client can call Firestore directly, the **real** lock is the
-`isAdmin()` check in the `broadcast` write rule above. As written, it pins
-broadcast writes to a single `YOUR_ADMIN_UID`, so until you fill that in **nobody
-can broadcast** — a safe default. To enable *your* broadcasts, set it to your
-admin account's UID.
-
-Anonymous auth hands out a fresh UID per device, so for a stable admin identity,
-sign the owner account in with a real (non-anonymous) method and hard-code that
-UID. That way only you can ever push global events, exactly as intended.
+push a global income boost or announcement to every online player. The password
+is stored as a one-way **SHA-256 hash** in `js/ui.js` (never in plaintext, since
+this file is publicly readable on the web) and the password itself is not
+committed anywhere.
 
 ---
 
