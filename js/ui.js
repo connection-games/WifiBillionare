@@ -179,6 +179,12 @@ WB.UI = (function () {
   }
   let settingsTab = "general";
   const UPDATES = [
+    { v: "v6.5.1 — Rebirth Fix & More Events", items: [
+      "🐛 Fixed the rebirth glitch — owning the whole empire no longer hands out absurd, glitched Legacy Points, and your wealth actually resets on rebirth.",
+      "♻️ You keep your planets through a rebirth, but the rent ramps back up over a few minutes — so a fresh life finally feels fresh.",
+      "📈 Investments can no longer balloon to near-infinite values (the real cause of the broken numbers). Existing glitched saves are auto-repaired on load.",
+      "🎲 8 new choice popups that actually DO things — energy-drink deals, mentors, scratch tickets, hackathons, surprise patrons and more, each with real boosts. Events also pop a little more often.",
+    ]},
     { v: "v6.5 — Polished & Roomier", items: [
       "✨ A big visual refresh — richer depth, softer Apple-style shadows, and a subtle material sheen across every panel and card.",
       "📐 More breathing room everywhere: roomier shop & list cards, a calmer top bar, and a cleaner, more consistent spacing rhythm.",

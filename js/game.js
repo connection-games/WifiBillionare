@@ -136,6 +136,13 @@ WB.GAME = (function () {
   function speedMult() {
     try { return localStorage.getItem("wb_mode") === "speedrun" ? 3 : 1; } catch (e) { return 1; }
   }
+  // Empire rent ramps 0 → full over the first 5 minutes of each life, so a
+  // rebirth feels like a true reset even though you keep your acquisitions.
+  const EMPIRE_RAMP_MS = 5 * 60 * 1000;
+  function empireRampMult() {
+    const t = Date.now() - (s.runStartedAt || 0);
+    return Math.max(0, Math.min(1, t / EMPIRE_RAMP_MS));
+  }
 
   function incomePerSec() {
     if (!s) return 0;
@@ -155,7 +162,10 @@ WB.GAME = (function () {
     if (s.money < 10000 && pup("faststart")) inc *= 1 + 0.5 * pup("faststart");
     // EMPIRE pays FLAT rent — planets don't compound with your gaming chair.
     // (Pre-6.2 it multiplied with era/housing/etc and printed near-infinite money.)
-    inc += (WB.EMPIRE ? WB.EMPIRE.income() : 0) * speedMult();
+    // After a REBIRTH you keep the planets, but the rent takes a few minutes to
+    // start flowing again — so a fresh life genuinely starts fresh instead of
+    // snapping back to quadrillions a second later.
+    inc += (WB.EMPIRE ? WB.EMPIRE.income() : 0) * speedMult() * empireRampMult();
     if (Date.now() < s.boost.until) inc *= s.boost.mult;
     if (s.res.energy <= 0) inc *= 0.3;
     if (inPrison()) inc *= 0.5; // your operation runs at half speed from a cell
@@ -553,7 +563,12 @@ WB.GAME = (function () {
 
   // ---------- Prestige ----------
   const PRESTIGE_REQ = 1e9;
-  const legacyGain = () => netWorth() >= PRESTIGE_REQ ? Math.floor(10 * Math.sqrt(netWorth() / PRESTIGE_REQ)) : 0;
+  const LEGACY_GAIN_CAP = 1e7; // a galactic net worth shouldn't mint absurd, glitchy point totals
+  const legacyGain = () => {
+    const nw = netWorth();
+    if (nw < PRESTIGE_REQ) return 0;
+    return Math.min(LEGACY_GAIN_CAP, Math.floor(10 * Math.sqrt(nw / PRESTIGE_REQ)));
+  };
   function doPrestige() {
     const gain = legacyGain();
     if (gain <= 0) return false;
@@ -759,7 +774,7 @@ WB.GAME = (function () {
     // Events
     if (now >= s.nextEventAt && !UI.modalOpen()) {
       fireEvent();
-      s.nextEventAt = now + (40 + Math.random() * 55) * 1000 / (speedMult() > 1 ? 2 : 1);
+      s.nextEventAt = now + (32 + Math.random() * 46) * 1000 / (speedMult() > 1 ? 2 : 1);
     }
 
     // Era / traits / goals
@@ -802,8 +817,31 @@ WB.GAME = (function () {
       // merge over defaults so new fields survive updates
       const base = defaultState();
       deepMerge(base, data);
+      sanitize(base);
       return base;
     } catch (e) { return null; }
+  }
+  // Repair saves corrupted by the pre-6.5.1 runaway (unbounded investments →
+  // ~1e49 net worth → ~1e21 legacy points). Clamp glitch-tier values back to a
+  // generous-but-sane range so nobody is stuck staring at a 22-digit counter.
+  function sanitize(st) {
+    const p = st.prestige;
+    if (p) {
+      if (!isFinite(p.legacy) || p.legacy > 1e12) p.legacy = Math.max(p.spent || 0, 5e10);
+      if (!isFinite(p.spent) || p.spent < 0) p.spent = 0;
+      if (p.spent > p.legacy) p.spent = p.legacy;
+    }
+    if (st.assets && st.assets.invest) {
+      Object.values(st.assets.invest).forEach(h => {
+        const cap = (h.invested || 0) * 1000;
+        if (!isFinite(h.value) || h.value < 0) h.value = 0;
+        if (cap > 0 && h.value > cap) h.value = cap;
+      });
+    }
+    ["money", "lifetimeEarnings", "allTimeEarnings"].forEach(k => {
+      if (!isFinite(st[k]) || st[k] < 0) st[k] = 0;
+    });
+    if (st.crypto && (!isFinite(st.crypto.holdings) || st.crypto.holdings < 0)) st.crypto.holdings = 0;
   }
   function deepMerge(target, src) {
     for (const k of Object.keys(src)) {

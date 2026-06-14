@@ -346,6 +346,100 @@ WB.EVENTS = (function () {
           effect: s => ({ money: -50, happiness: 6 }) },
       ],
     },
+
+    // ---------- v6.5.1: more popups that actually DO something ----------
+    {
+      id: "energydrink", title: "Energy Drink Sponsorship", icon: "⚡",
+      text: "A neon-colored energy drink brand offers you a crate of 'LIQUID FOCUS™' to post about. The ingredients are mostly question marks.",
+      choices: [
+        { label: "Chug one & grind", result: "Your heart is a kick drum and your code has never flowed faster. Worth it. Probably.",
+          effect: s => ({ energy: 60, incomeBoost: { mult: 2.5, sec: 150 }, stress: 8 }) },
+        { label: "Just take the cash deal", result: "You don't even drink it. Sponsored post up, money in. Easiest gig ever.",
+          effect: s => ({ money: 200 + wf(180), followers: 150, happiness: 4 }) },
+      ],
+    },
+    {
+      id: "mentor", title: "A Mentor Takes Notice", icon: "🧙",
+      cond: s => s.stats.totalClicks > 50,
+      text: "A grizzled veteran of the industry offers to mentor you. They speak only in metaphors and have very strong opinions about tabs vs spaces.",
+      choices: [
+        { label: "Absorb the wisdom", result: "Three hours of stories later, something clicked. You leveled up the hard way.",
+          effect: s => ({ skillXp: { amount: 600 }, intelligence: 3, motivation: 12 }) },
+        { label: "Ask for their network instead", result: "They made two calls. Doors you didn't know existed swung open.",
+          effect: s => ({ reputation: 30, incomeBoost: { mult: 2, sec: 120 } }) },
+      ],
+    },
+    {
+      id: "lottery", title: "Scratch Ticket at the Gas Station", icon: "🎟️",
+      cond: s => s.money > 200,
+      text: "You bought a $5 scratcher with your snack. The clerk gives you a look that says 'sure, buddy'. There's a faint shimmer under the coating…",
+      choices: [
+        { label: "Scratch it!", result: "JACKPOT. The clerk is speechless. You act casual but you are SPRINTING inside.", luckCheck: 0.45,
+          effect: s => ({ money: 500 + wf(900), happiness: 20, ego: 8 }),
+          failResult: "'NOT A WINNER'. Of course. You frame it as a lesson about probability.",
+          failEffect: s => ({ money: -5, happiness: -2 }) },
+        { label: "Save it for later", result: "It sits in your wallet, full of unrealized potential. Like you, once.",
+          effect: s => ({ motivation: 4 }) },
+      ],
+    },
+    {
+      id: "hackathon", title: "48-Hour Hackathon", icon: "💻",
+      cond: s => s.stats.projectsShipped >= 1,
+      text: "A hackathon with a real cash prize. 48 hours, free pizza, zero sleep, and a leaderboard that brings out a side of you that scares people.",
+      choices: [
+        { label: "Go all in", result: "You shipped a demo so good the judges asked if it was already a company. First place.", luckCheck: 0.6,
+          effect: s => ({ money: wf(700), skillXp: { amount: 400 }, reputation: 15, incomeBoost: { mult: 2, sec: 120 } }),
+          failResult: "You came 4th. The winner used your exact idea but with a better logo. Brutal, but educational.",
+          failEffect: s => ({ skillXp: { amount: 250 }, stress: 12, motivation: -5 }) },
+        { label: "Watch from home", result: "You followed along online and learned a few tricks without the sleep deprivation.",
+          effect: s => ({ skillXp: { amount: 120 }, energy: 5 }) },
+      ],
+    },
+    {
+      id: "oldwallet", title: "Forgotten Crypto Wallet", icon: "🔑",
+      cond: s => s.stats.totalClicks > 100,
+      text: "While cleaning out an old laptop you find a wallet from years ago. You vaguely remember 'aping into' something for a laugh. The seed phrase is written on a pizza receipt.",
+      choices: [
+        { label: "Import it & pray", result: "It still had coins in it. And they… went UP. Past you was an unhinged genius.", luckCheck: 0.55,
+          effect: s => ({ money: wf(800), happiness: 15 }),
+          failResult: "The coin rugged in 2019. The wallet holds $0.04 and a profound life lesson.",
+          failEffect: s => ({ happiness: -4 }) },
+        { label: "Sell the laptop on eBay", result: "Vintage hardware collectors are unwell. You sold the whole thing for a tidy sum.",
+          effect: s => ({ money: 80 + wf(120) }) },
+      ],
+    },
+    {
+      id: "montage", title: "Productivity Montage", icon: "🎬",
+      text: "You feel it coming on — that rare, glorious mood where everything just WORKS. Cue the upbeat music and quick cuts of you being unreasonably effective.",
+      choices: [
+        { label: "Ride the wave", result: "You cleared a week of work in an afternoon. The montage was real. The dishes, however, remain.",
+          effect: s => ({ incomeBoost: { mult: 3, sec: 180 }, motivation: 15, energy: -10 }) },
+        { label: "Channel it into learning", result: "Instead of grinding cash, you grinded your brain. The XP bar sang.",
+          effect: s => ({ skillXp: { amount: 500 }, intelligence: 2, motivation: 10 }) },
+      ],
+    },
+    {
+      id: "shoutout", title: "Big Account Shoutout", icon: "📣",
+      cond: s => s.stats.followers > 50 || s.stats.projectsShipped >= 2,
+      text: "A massive account with a famously chaotic feed quote-tweeted your work to their millions of followers. The replies are… a lot. But the numbers are going UP.",
+      choices: [
+        { label: "Lean into the moment", result: "You posted a perfectly-timed follow-up and the algorithm fell in love. Welcome to the For You page.",
+          effect: s => ({ followers: 1200 + s.stats.followers * 0.2, incomeBoost: { mult: 2.5, sec: 150 }, reputation: 10 }) },
+        { label: "Stay humble, ship more", result: "While everyone argued in your replies, you quietly shipped. The respect compounded.",
+          effect: s => ({ reputation: 25, skillXp: { amount: 200 }, motivation: 8 }) },
+      ],
+    },
+    {
+      id: "anonpatron", title: "Anonymous Patron", icon: "🎁",
+      cond: s => s.stats.projectsShipped >= 1,
+      text: "A wire transfer hits with no name attached — just a note: 'saw what you're building. keep going.' No strings. No catch. Just vibes and a generous sum.",
+      choices: [
+        { label: "Accept gracefully", result: "You'll never know who it was. You promise yourself you'll pay it forward someday. (You will forget. That's okay.)",
+          effect: s => ({ money: 1000 + wf(500), motivation: 20, happiness: 12 }) },
+        { label: "Try to send it back", result: "The account doesn't exist. The money is yours whether you like it or not. You decide to like it.",
+          effect: s => ({ money: 1000 + wf(500), reputation: 8 }) },
+      ],
+    },
   ];
 
   // ---------- Minor events (auto-resolve, toast + thought) ----------
@@ -477,9 +571,9 @@ WB.EVENTS = (function () {
 
   // ---------- Scheduling / resolution ----------
   function pickEvent(s) {
-    // ~25% chance of major event when one is eligible
+    // chance of a major (choice) event when one is eligible — the rest are minor toasts
     const majors = MAJOR.filter(e => (!e.cond || e.cond(s)) && !WB.GAME.onCooldown(e.id));
-    if (majors.length && WB.chance(0.42)) {
+    if (majors.length && WB.chance(0.5)) {
       return { kind: "major", ev: WB.pick(majors) };
     }
     const minors = MINOR.filter(e => !e.cond || e.cond(s));

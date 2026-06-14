@@ -137,6 +137,11 @@ WB.ASSETS = (function () {
       const driftSec = def.drift / 3600;
       const noiseSec = (Math.random() * 2 - 1) * (def.vol / 60);
       h.value = Math.max(0, h.value * (1 + (driftSec + noiseSec) * dt));
+      // Cap unbounded compounding: a holding can grow to at most 1000× what you
+      // put in. Without this, a long-held high-drift fund balloons to absurd
+      // (near-infinite) net worth and breaks the rebirth/legacy math.
+      const cap = (h.invested || 0) * 1000;
+      if (cap > 0 && h.value > cap) h.value = cap;
     });
   }
 
