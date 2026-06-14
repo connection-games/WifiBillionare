@@ -16,10 +16,17 @@
   --gold: #b25000;
   --red: #e30000;
   --purple: #8944ab;
-  --shadow-sm: 0 1px 4px rgba(0, 0, 0, 0.04), 0 2px 12px rgba(0, 0, 0, 0.04);
-  --shadow-md: 0 4px 20px rgba(0, 0, 0, 0.08);
-  --shadow-lg: 0 24px 70px rgba(0, 0, 0, 0.18);
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.04), 0 3px 10px rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 2px 6px rgba(0, 0, 0, 0.06), 0 12px 28px rgba(0, 0, 0, 0.10);
+  --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.12), 0 36px 80px rgba(0, 0, 0, 0.22);
+  --shadow-hover: 0 4px 12px rgba(0, 0, 0, 0.07), 0 18px 38px rgba(0, 0, 0, 0.13);
+  --sheen: inset 0 1px 0 rgba(255, 255, 255, 0.6);
   --radius: 18px;
+  --radius-sm: 12px;
+  --radius-lg: 22px;
+  /* 8-pt spacing scale — keeps the whole UI on one rhythm */
+  --s1: 4px; --s2: 8px; --s3: 12px; --s4: 16px; --s5: 24px; --s6: 32px;
+  --ease: cubic-bezier(0.2, 0.8, 0.3, 1);
 }
 html, body { height: 100%; }
 body {
@@ -491,9 +498,11 @@ html[data-theme="dark"] {
   --gold: #ff9f0a;
   --red: #ff453a;
   --purple: #bf5af2;
-  --shadow-sm: 0 1px 4px rgba(0, 0, 0, 0.3), 0 2px 12px rgba(0, 0, 0, 0.25);
-  --shadow-md: 0 4px 20px rgba(0, 0, 0, 0.45);
-  --shadow-lg: 0 24px 70px rgba(0, 0, 0, 0.6);
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.35), 0 3px 12px rgba(0, 0, 0, 0.3);
+  --shadow-md: 0 2px 8px rgba(0, 0, 0, 0.4), 0 14px 30px rgba(0, 0, 0, 0.5);
+  --shadow-lg: 0 10px 28px rgba(0, 0, 0, 0.5), 0 36px 80px rgba(0, 0, 0, 0.65);
+  --shadow-hover: 0 4px 14px rgba(0, 0, 0, 0.4), 0 20px 42px rgba(0, 0, 0, 0.55);
+  --sheen: inset 0 1px 0 rgba(255, 255, 255, 0.06);
 }
 html[data-theme="dark"] #topbar { background: rgba(22, 22, 23, 0.75); }
 html[data-theme="dark"] #goal-banner { background: rgba(29, 29, 31, 0.6); }
@@ -1571,3 +1580,118 @@ html[data-theme="dark"] .crime-btn:hover { background: rgba(41, 151, 255, 0.24);
 .survey-opt { display: flex; align-items: center; gap: 9px; padding: 9px 12px; background: var(--panel2); border: 1px solid var(--border-soft); border-radius: 11px; font-size: 13px; cursor: pointer; }
 .survey-opt input { width: 16px; height: 16px; accent-color: var(--accent); }
 .lb-refresh { margin-top: 9px; }
+
+/* ============================================================ v6.5 — Richer & Roomier
+   A spacing + depth pass. More consistent air, layered Apple-style shadows,
+   a subtle material sheen on light surfaces, and smoother interactive feedback.
+   Pure visual polish — no layout restructuring. Source order = highest priority. */
+
+/* ---- Top chrome: a touch more air + crisper separation ---- */
+#topbar { padding: 12px 24px; gap: 16px; box-shadow: 0 1px 0 var(--border-soft); }
+#logo { letter-spacing: -0.3px; }
+.badge { padding: 5px 13px; letter-spacing: 0.1px; }
+#goal-banner { padding: 9px 24px; }
+#settings-btn, #theme-btn { width: 36px; height: 36px; }
+#settings-btn:hover { transform: rotate(35deg); }
+
+/* ---- Scene column: a hair more rhythm under the room ---- */
+#scene { padding: 20px; gap: 12px; }
+#room-frame { box-shadow: var(--shadow-md), 0 0 0 1px rgba(0, 0, 0, 0.05); }
+
+/* ---- Action category cards + activity buttons: depth + spring ---- */
+.action-card {
+  border-radius: var(--radius-sm); padding: 11px 15px 9px;
+  box-shadow: var(--shadow-sm), var(--sheen);
+  transition: transform 0.16s var(--ease), box-shadow 0.18s ease, border-color 0.18s ease;
+}
+.action-card:hover { transform: translateY(-2px); box-shadow: var(--shadow-hover), var(--sheen); }
+.act-btn {
+  border-radius: var(--radius-sm); padding: 8px 11px;
+  box-shadow: var(--shadow-sm), var(--sheen);
+  transition: transform 0.14s var(--ease), border-color 0.16s ease, background 0.16s ease, box-shadow 0.16s ease;
+}
+.act-btn:hover { transform: translateY(-2px); box-shadow: var(--shadow-hover), var(--sheen); }
+
+/* ---- Hustle button: richer surface ---- */
+#hustle-btn { box-shadow: 0 2px 6px rgba(0, 113, 227, 0.25), 0 10px 22px rgba(0, 113, 227, 0.30); }
+#hustle-btn:hover { filter: brightness(1.07); transform: translateY(-1px); }
+
+/* ---- Character panel: softer material + roomier meters ---- */
+#char-panel { padding: 14px 18px 13px; box-shadow: var(--shadow-sm), var(--sheen); }
+#char-meters { gap: 9px 16px; }
+.meter { gap: 5px; }
+
+/* ---- Right panel: more breathing room ---- */
+#tab-content { padding: 16px 18px 24px; }
+.section-title { margin: 20px 4px 10px; letter-spacing: 0.7px; opacity: 0.92; }
+.section-title:first-child { margin-top: 4px; }
+
+/* ---- List / shop cards: roomier, with depth + lift ---- */
+.card {
+  padding: 14px 16px; margin-bottom: 10px; border-radius: var(--radius-sm);
+  box-shadow: var(--shadow-sm), var(--sheen);
+  transition: transform 0.16s var(--ease), box-shadow 0.18s ease, border-color 0.18s ease;
+}
+.card:hover { transform: translateY(-2px); box-shadow: var(--shadow-hover), var(--sheen); border-color: var(--border); }
+.card.col { gap: 10px; }
+
+/* ---- Segmented tab bar: more substantial, smoother ---- */
+#tabs { padding: 4px; gap: 3px; box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.05); }
+.tab-btn { padding: 8px 4px; transition: color 0.18s, background 0.18s var(--ease), box-shadow 0.18s; }
+.tab-btn.active { box-shadow: 0 1px 4px rgba(0, 0, 0, 0.12), var(--sheen); }
+
+/* ---- Buttons: richer surfaces + springier press ---- */
+.btn { transition: transform 0.1s var(--ease), filter 0.15s, background 0.15s, box-shadow 0.16s; }
+.btn.primary { background: linear-gradient(180deg, var(--accent-hover), var(--accent)); box-shadow: 0 2px 8px rgba(0, 113, 227, 0.26); }
+.btn.primary:hover { filter: brightness(1.05); box-shadow: 0 4px 14px rgba(0, 113, 227, 0.32); }
+.btn.buy { box-shadow: var(--sheen); }
+.btn.buy:hover { transform: translateY(-1px); }
+html[data-theme="dark"] .btn.primary { background: linear-gradient(180deg, var(--accent-hover), var(--accent)); }
+
+/* ---- Profile / leaderboard / friend rows: gentle hover lift ---- */
+.fr-row, .lb-row, .survey-opt {
+  transition: transform 0.14s ease, box-shadow 0.16s ease, border-color 0.16s ease;
+}
+.fr-row:hover, .lb-row:hover { transform: translateY(-1px); box-shadow: var(--shadow-sm); }
+.survey-opt:hover { border-color: var(--accent); }
+
+/* ---- Nicer, quieter scrollbars ---- */
+#tab-content::-webkit-scrollbar, #profile-body::-webkit-scrollbar, .fr-chat::-webkit-scrollbar { width: 10px; }
+#tab-content::-webkit-scrollbar-thumb, #profile-body::-webkit-scrollbar-thumb, .fr-chat::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.16); border-radius: 6px; border: 3px solid transparent; background-clip: padding-box;
+}
+#tab-content::-webkit-scrollbar-thumb:hover { background: rgba(0, 0, 0, 0.30); background-clip: padding-box; }
+html[data-theme="dark"] #tab-content::-webkit-scrollbar-thumb,
+html[data-theme="dark"] #profile-body::-webkit-scrollbar-thumb,
+html[data-theme="dark"] .fr-chat::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.18); background-clip: padding-box; }
+
+/* ---- Keyboard focus polish (Apple-style ring) ---- */
+button:focus-visible, input:focus-visible, .card:focus-visible {
+  outline: none; box-shadow: 0 0 0 3px var(--accent-tint), 0 0 0 1px var(--accent);
+}
+
+/* ---- Tab "hero" banners: elevated, with an inner top highlight for richness ---- */
+.crime-hero, .lb-hero, .chal-hero, .empire-hero {
+  box-shadow: var(--shadow-md), inset 0 1px 0 rgba(255, 255, 255, 0.12);
+  margin-bottom: 14px;
+}
+
+/* ---- Modal: roomier choices that lift on hover ---- */
+#modal-content { padding: 32px 36px; }
+.btn.choice {
+  padding: 13px 17px; transition: transform 0.14s var(--ease), border-color 0.15s, background 0.15s, box-shadow 0.15s;
+}
+.btn.choice:hover { transform: translateY(-2px); box-shadow: var(--shadow-sm); }
+.ev-choices { gap: 10px; }
+.perk-card { box-shadow: var(--shadow-sm), var(--sheen); }
+.perk-card:hover { box-shadow: var(--shadow-hover), var(--sheen); }
+
+/* ---- Buy-button cost: a touch bolder so prices read clearly ---- */
+.btn.buy .cost { font-weight: 800; letter-spacing: -0.2px; }
+
+/* ---- Chips & tags: align to the softer radius rhythm ---- */
+.cchip, .cbadge, .badge, .tag, .chip { letter-spacing: 0.1px; }
+
+/* ---- Toasts: align spacing + smoother stack ---- */
+#toasts { gap: 9px; }
+.toast { padding: 12px 16px; border-radius: 14px; }

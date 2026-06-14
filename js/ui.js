@@ -179,6 +179,12 @@ WB.UI = (function () {
   }
   let settingsTab = "general";
   const UPDATES = [
+    { v: "v6.5 — Polished & Roomier", items: [
+      "✨ A big visual refresh — richer depth, softer Apple-style shadows, and a subtle material sheen across every panel and card.",
+      "📐 More breathing room everywhere: roomier shop & list cards, a calmer top bar, and a cleaner, more consistent spacing rhythm.",
+      "🎛️ Smoother, springier interactions — cards and buttons gently lift on hover, with refined segmented tabs and scrollbars.",
+      "🌗 Light and dark themes both retuned for a cleaner, more premium feel.",
+    ]},
     { v: "v6.4.1 — Feel Good", items: [
       "💥 NEW: lucky CRIT clicks! Every hustle has a small chance to pay out 4–7× with a golden burst — track your luck in Stats.",
       "✨ Juicier feedback: floating cash pops and springs, and the Hustle button now bounces and flashes when you smash it.",
