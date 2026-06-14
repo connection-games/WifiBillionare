@@ -201,40 +201,88 @@ WB.DATA = (function () {
 
   // ---------- Challenges (claimable, with rewards) ----------
   // prog(s) → current value; goal → target. reward: money(minutes of income) |
-  // boost {mult, sec} | legacy(points) | followers(n). tier drives the card colour.
+  // boost {mult, sec} | legacy(points) | followers(n) | luck(perm) | intel(perm) |
+  // rep(perm) | xp{skill,amount}. tier (bronze|silver|gold|legendary) drives colour.
   const crimeStat = (s, k) => (s.crime && s.crime[k]) || 0;
+  const eStage = id => (WB.EMPIRE ? WB.EMPIRE.stageOf(id) + 1 : 0); // 0 = none, 1..n = stages owned
+  const eOwned = () => (WB.EMPIRE ? WB.EMPIRE.rank().owned : 0);
   const CHALLENGES = [
+    // ---------------- BRONZE — warm-up ----------------
     { id: "c_clicks",  icon: "💪", tier: "bronze", name: "Smash That Button", desc: "Hit HUSTLE 500 times.",
-      goal: 500, prog: s => s.stats.totalClicks, reward: { money: 8 }, rewardText: "💰 8 min of income" },
+      goal: 500, prog: s => s.stats.totalClicks, reward: { money: 10 }, rewardText: "💰 10 min of income" },
     { id: "c_ship",    icon: "🚀", tier: "bronze", name: "Ship It", desc: "Ship 5 projects.",
-      goal: 5, prog: s => s.stats.projectsShipped, reward: { money: 10 }, rewardText: "💰 10 min of income" },
+      goal: 5, prog: s => s.stats.projectsShipped, reward: { money: 12 }, rewardText: "💰 12 min of income" },
     { id: "c_rested",  icon: "😴", tier: "bronze", name: "Sleep Is For The Strong", desc: "Sleep 30 times.",
-      goal: 30, prog: s => s.stats.sleepSessions, reward: { money: 8 }, rewardText: "💰 8 min of income" },
+      goal: 30, prog: s => s.stats.sleepSessions, reward: { boost: { mult: 1.5, sec: 120 } }, rewardText: "🔥 ×1.5 income · 2 min" },
     { id: "c_grass",   icon: "🌱", tier: "bronze", name: "Touch Grass", desc: "Go outside 25 times.",
       goal: 25, prog: s => s.stats.grassTouched, reward: { boost: { mult: 1.5, sec: 120 } }, rewardText: "🔥 ×1.5 income · 2 min" },
+    { id: "c_gigs",    icon: "💼", tier: "bronze", name: "Side Hustle", desc: "Complete 15 freelance gigs.",
+      goal: 15, prog: s => s.stats.gigsDone, reward: { money: 12 }, rewardText: "💰 12 min of income" },
+    { id: "c_gear",    icon: "🛠️", tier: "bronze", name: "Geared Up", desc: "Buy 8 pieces of equipment.",
+      goal: 8, prog: s => s.stats.equipmentBought, reward: { money: 14 }, rewardText: "💰 14 min of income" },
+
+    // ---------------- SILVER — getting serious ----------------
     { id: "c_crypto",  icon: "🪙", tier: "silver", name: "Diamond Hands", desc: "Make 20 crypto trades.",
-      goal: 20, prog: s => s.stats.cryptoTrades, reward: { money: 12 }, rewardText: "💰 12 min of income" },
+      goal: 20, prog: s => s.stats.cryptoTrades, reward: { money: 18 }, rewardText: "💰 18 min of income" },
     { id: "c_crime",   icon: "🦹", tier: "silver", name: "Career Criminal", desc: "Pull off 10 crimes.",
-      goal: 10, prog: s => crimeStat(s, "crimesDone") + crimeStat(s, "scamSuccess"), reward: { money: 14 }, rewardText: "💰 14 min of income" },
+      goal: 10, prog: s => crimeStat(s, "crimesDone") + crimeStat(s, "scamSuccess"), reward: { money: 20 }, rewardText: "💰 20 min of income" },
     { id: "c_poop",    icon: "💩", tier: "silver", name: "Rock Bottom", desc: "Poop yourself 3 times. (Why.)",
-      goal: 3, prog: s => s.stats.poopAccidents || 0, reward: { money: 6 }, rewardText: "💰 6 min of income (hush money)" },
+      goal: 3, prog: s => s.stats.poopAccidents || 0, reward: { money: 10 }, rewardText: "💰 10 min of income" },
     { id: "c_viral",   icon: "📱", tier: "silver", name: "Going Viral", desc: "Land 3 viral hits.",
-      goal: 3, prog: s => s.stats.viralProjects, reward: { followers: 1000 }, rewardText: "📈 +1,000 followers" },
+      goal: 3, prog: s => s.stats.viralProjects, reward: { followers: 2500 }, rewardText: "📈 +2,500 followers" },
+    { id: "c_crit",    icon: "💥", tier: "silver", name: "Lucky Streak", desc: "Land 100 lucky CRIT clicks.",
+      goal: 100, prog: s => s.stats.critClicks || 0, reward: { luck: 5 }, rewardText: "🍀 +5 luck (perm)" },
+    { id: "c_invest",  icon: "📈", tier: "silver", name: "Smart Money", desc: "Bank $250K in investment profit.",
+      goal: 2.5e5, prog: s => s.stats.investProfit, reward: { money: 22 }, rewardText: "💰 22 min of income" },
+    { id: "c_staff",   icon: "🧑‍💼", tier: "silver", name: "I Have People For That", desc: "Hire 3 staff members.",
+      goal: 3, prog: s => s.stats.staffHired, reward: { boost: { mult: 2, sec: 180 } }, rewardText: "🔥 ×2 income · 3 min" },
+    { id: "c_fans",    icon: "🌟", tier: "silver", name: "Certified Influencer", desc: "Reach 100,000 followers.",
+      goal: 1e5, prog: s => s.stats.followers, reward: { legacy: 2 }, rewardText: "♻️ +2 Legacy Points" },
+
+    // ---------------- GOLD — proven ----------------
     { id: "c_brain",   icon: "🧠", tier: "gold", name: "Galaxy Brain", desc: "Reach Intelligence 50.",
-      goal: 50, prog: s => Math.floor(s.res.intelligence), reward: { boost: { mult: 2, sec: 180 } }, rewardText: "🔥 ×2 income · 3 min" },
+      goal: 50, prog: s => Math.floor(s.res.intelligence), reward: { intel: 10 }, rewardText: "🧠 +10 INT (perm)" },
+    { id: "c_rep",     icon: "🏅", tier: "gold", name: "Household Name", desc: "Reach 250 Reputation.",
+      goal: 250, prog: s => Math.floor(s.res.reputation), reward: { rep: 50 }, rewardText: "🏅 +50 rep (perm)" },
     { id: "c_mill",    icon: "💰", tier: "gold", name: "Millionaire Mindset", desc: "Reach $1M net worth.",
-      goal: 1e6, prog: () => WB.GAME.netWorth(), reward: { legacy: 1 }, rewardText: "♻️ +1 Legacy Point" },
+      goal: 1e6, prog: () => WB.GAME.netWorth(), reward: { legacy: 3 }, rewardText: "♻️ +3 Legacy Points" },
     { id: "c_era",     icon: "🌍", tier: "gold", name: "Time Traveler", desc: "Reach the AI Era.",
-      goal: 2, prog: s => s.era, reward: { money: 15 }, rewardText: "💰 15 min of income" },
+      goal: 2, prog: s => s.era, reward: { money: 25 }, rewardText: "💰 25 min of income" },
+    { id: "c_clicks2", icon: "🥊", tier: "gold", name: "Button Destroyer", desc: "Hit HUSTLE 25,000 times.",
+      goal: 25000, prog: s => s.stats.totalClicks, reward: { boost: { mult: 3, sec: 240 } }, rewardText: "🔥 ×3 income · 4 min" },
     { id: "c_billion", icon: "🐋", tier: "gold", name: "Whale Alert", desc: "Earn $1B all-time.",
-      goal: 1e9, prog: s => s.allTimeEarnings, reward: { legacy: 2 }, rewardText: "♻️ +2 Legacy Points" },
+      goal: 1e9, prog: s => s.allTimeEarnings, reward: { legacy: 4 }, rewardText: "♻️ +4 Legacy Points" },
+    { id: "c_prestige3", icon: "♻️", tier: "gold", name: "Born Again. Again.", desc: "Rebirth 3 times.",
+      goal: 3, prog: s => s.prestige.count, reward: { legacy: 5 }, rewardText: "♻️ +5 Legacy Points" },
+
+    // ---------------- LEGENDARY — the real grind ----------------
+    { id: "c_trillion", icon: "🏦", tier: "legendary", name: "Thirteen Zeroes", desc: "Reach $1 TRILLION net worth.",
+      goal: 1e12, prog: () => WB.GAME.netWorth(), reward: { legacy: 10 }, rewardText: "♻️ +10 Legacy Points" },
+    { id: "c_empire",  icon: "🪐", tier: "legendary", name: "Final Boss Origin", desc: "Found your first mega-venture in the Empire.",
+      goal: 1, prog: () => eOwned() > 0 ? 1 : 0, reward: { legacy: 6 }, rewardText: "♻️ +6 Legacy Points" },
+    { id: "c_moon",    icon: "🌕", tier: "legendary", name: "Buy The Moon", desc: "Acquire the Moon in Stardust Aerospace.",
+      goal: 6, prog: () => eStage("space"), reward: { legacy: 12 }, rewardText: "♻️ +12 Legacy Points" },
+    { id: "c_mars",    icon: "🔴", tier: "legendary", name: "Red Planet Landlord", desc: "Buy Mars outright.",
+      goal: 8, prog: () => eStage("space"), reward: { boost: { mult: 4, sec: 300 } }, rewardText: "🔥 ×4 income · 5 min" },
+    { id: "c_solar",   icon: "☀️", tier: "legendary", name: "Own The Solar System", desc: "Complete Stardust Aerospace entirely.",
+      goal: 10, prog: () => eStage("space"), reward: { legacy: 18 }, rewardText: "♻️ +18 Legacy Points" },
+    { id: "c_quad",    icon: "💎", tier: "legendary", name: "Quadrillionaire", desc: "Reach $1 QUADRILLION net worth.",
+      goal: 1e15, prog: () => WB.GAME.netWorth(), reward: { legacy: 25 }, rewardText: "♻️ +25 Legacy Points" },
+    { id: "c_critlord", icon: "🎰", tier: "legendary", name: "The House Always Wins", desc: "Land 1,000 lucky CRIT clicks.",
+      goal: 1000, prog: s => s.stats.critClicks || 0, reward: { boost: { mult: 5, sec: 300 } }, rewardText: "🔥 ×5 income · 5 min" },
+    { id: "c_prestige10", icon: "🔁", tier: "legendary", name: "Groundhog Billionaire", desc: "Rebirth 10 times.",
+      goal: 10, prog: s => s.prestige.count, reward: { legacy: 20 }, rewardText: "♻️ +20 Legacy Points" },
+    { id: "c_marathon", icon: "⏱️", tier: "legendary", name: "Touch Grass (Ironic)", desc: "Play for a total of 10 hours.",
+      goal: 36000, prog: s => s.stats.playTimeSec, reward: { legacy: 8 }, rewardText: "♻️ +8 Legacy Points" },
+    { id: "c_empireall", icon: "👑", tier: "legendary", name: "Cosmic Landlord", desc: "Own EVERY acquisition in the Empire (26/26).",
+      goal: 26, prog: () => eOwned(), reward: { legacy: 50 }, rewardText: "♻️ +50 Legacy Points" },
   ];
 
   return { HOUSING, EQUIPMENT, CAREERS, SKILLS, ACTIVITIES, ERAS, TRAITS, PERKS, PRESTIGE_UPGRADES, GOALS, CHALLENGES };
 })();
 
 // ---------- Build version (keep in sync with package.json) ----------
-WB.VERSION = "6.5.1";
+WB.VERSION = "6.5.2";
 
 // ---------- Number formatting ----------
 WB.fmt = function (n, money) {

@@ -368,6 +368,15 @@ WB.I18N = (function () {
     "Your profile & friends": "Din profil & vänner", "Player": "Spelare",
     // challenges
     "Challenges": "Utmaningar", "Claimed": "Hämtad", "Claim reward": "Hämta belöning",
+    "ready to claim": "redo att hämtas", "Pin the ones you're chasing. Progress carries across every life.": "Nåla fast de du jagar. Framsteg följer med genom varje liv.",
+    "Track this challenge": "Spåra denna utmaning",
+    "bronze": "brons", "silver": "silver", "gold": "guld", "legendary": "legendarisk",
+    "Bronze": "Brons", "Silver": "Silver", "Gold": "Guld", "Legendary": "Legendarisk",
+    "income": "inkomst", "Legacy": "Arv", "fans": "fans", "luck": "tur", "rep": "rykte",
+    // toast notification titles
+    "Reward": "Belöning", "Heads up": "Obs", "Something happened": "Något hände", "Level up": "Ny nivå",
+    "New trait": "Ny egenskap", "Challenge complete": "Utmaning klar", "Achievement": "Bedrift",
+    "Going viral": "Blir viral", "New era": "Ny era", "now": "nu",
     "Smash That Button": "Smasha knappen", "Hit HUSTLE 500 times.": "Tryck HUSTLA 500 gånger.",
     "Ship It": "Skeppa det", "Ship 5 projects.": "Skeppa 5 projekt.",
     "Sleep Is For The Strong": "Sömn är för de svaga", "Sleep 30 times.": "Sov 30 gånger.",

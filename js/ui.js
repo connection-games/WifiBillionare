@@ -99,6 +99,21 @@ WB.UI = (function () {
   }
 
   let lastToastText = "", lastToastAt = 0;
+  // Apple-notification styling: app icon (the leading emoji, or a per-type
+  // default) + a bold title line + the message body + "now".
+  const TOAST_META = {
+    good:  { app: "Reward",              icon: "💸" },
+    bad:   { app: "Heads up",            icon: "⚠️" },
+    event: { app: "Something happened",  icon: "🎲" },
+    level: { app: "Level up",            icon: "⭐" },
+    trait: { app: "New trait",           icon: "🧬" },
+    goal:  { app: "Challenge complete",  icon: "🎯" },
+    ach:   { app: "Achievement",         icon: "🏆" },
+    viral: { app: "Going viral",         icon: "🔥" },
+    era:   { app: "New era",             icon: "🌍" },
+    info:  { app: "WiFi Billionaire",    icon: "📶" },
+  };
+  const TOAST_EMOJI_RE = /^(\p{Extended_Pictographic}(?:️|‍\p{Extended_Pictographic})*️?)\s*/u;
   function toast(text, type) {
     text = WB.t(text); // constant toasts translate; composed ones pass through
     pushNotif(text, type); // everything is collected in the inbox
@@ -108,7 +123,16 @@ WB.UI = (function () {
     const box = $("toasts");
     const el = document.createElement("div");
     el.className = "toast " + (type || "info");
-    el.textContent = text;
+    const meta = TOAST_META[type || "info"] || TOAST_META.info;
+    const m = text.match(TOAST_EMOJI_RE);
+    const icon = m ? m[1] : meta.icon;
+    const body = m ? text.slice(m[0].length) : text;
+    el.innerHTML = `
+      <div class="toast-icon">${icon}</div>
+      <div class="toast-body">
+        <div class="toast-row"><span class="toast-app">${esc(WB.t(meta.app))}</span><span class="toast-time">${WB.t("now")}</span></div>
+        <div class="toast-msg">${esc(body)}</div>
+      </div>`;
     box.appendChild(el);
     while (box.children.length > 4) box.removeChild(box.firstChild);
     setTimeout(() => { el.classList.add("out"); setTimeout(() => el.remove(), 400); }, 6000);
@@ -179,6 +203,12 @@ WB.UI = (function () {
   }
   let settingsTab = "general";
   const UPDATES = [
+    { v: "v6.5.2 — Challenges & Notifications", items: [
+      "🎯 Challenges overhauled — 31 challenges across four tiers, including a brutal new ⚜️ Legendary tier (buy the Moon, own the Solar System, 1,000 lucky crits…).",
+      "📌 Track challenges — pin the ones you're chasing and they float to the top with a highlight, with a per-tier progress breakdown up top.",
+      "🏆 Rewards worth the grind — big Legacy Point payouts, permanent stat boosts (luck / intelligence / reputation) and huge income multipliers.",
+      "🔔 Beautiful new notifications — toasts are now real Apple-style notification cards with an app icon, title, time and message, matching the rest of the UI.",
+    ]},
     { v: "v6.5.1 — Rebirth Fix & More Events", items: [
       "🐛 Fixed the rebirth glitch — owning the whole empire no longer hands out absurd, glitched Legacy Points, and your wealth actually resets on rebirth.",
       "♻️ You keep your planets through a rebirth, but the rent ramps back up over a few minutes — so a fresh life finally feels fresh.",
@@ -880,31 +910,52 @@ WB.UI = (function () {
   }
 
   // ---------- Challenges tab ----------
+  const TIER_ORDER = { bronze: 0, silver: 1, gold: 2, legendary: 3 };
   function tabChallenges() {
     const list = WB.DATA.CHALLENGES;
-    const claimedCount = list.filter(c => st.challengesClaimed[c.id]).length;
+    const fmtN = n => n >= 1000 ? WB.fmt(n) : Math.floor(n);
+    // compute state for each, then sort: tracked → ready → in-progress(% desc) → claimed
+    const rows = list.map(c => {
+      const raw = Math.max(0, c.prog(st));
+      const claimed = !!st.challengesClaimed[c.id];
+      const done = raw >= c.goal;
+      const tracked = !!st.challengeTrack[c.id] && !claimed;
+      const pct = Math.min(100, raw / c.goal * 100);
+      const rank = tracked ? 0 : claimed ? 3 : done ? 1 : 2;
+      return { c, raw, claimed, done, tracked, pct, rank };
+    });
+    rows.sort((a, b) => a.rank - b.rank || b.pct - a.pct || TIER_ORDER[a.c.tier] - TIER_ORDER[b.c.tier]);
+
+    const claimedCount = rows.filter(r => r.claimed).length;
+    const readyCount = rows.filter(r => r.done && !r.claimed).length;
+    const tiers = ["bronze", "silver", "gold", "legendary"];
+    const tierDots = tiers.map(t => {
+      const all = rows.filter(r => r.c.tier === t);
+      const got = all.filter(r => r.claimed).length;
+      return `<span class="chal-tier-stat ${t}">${WB.t(t[0].toUpperCase() + t.slice(1))} ${got}/${all.length}</span>`;
+    }).join("");
+
     let html = `
       <div class="chal-hero">
-        <div class="chal-hero-top"><b>🎯 Challenges</b><span class="chal-count">${claimedCount}/${list.length}</span></div>
-        <div class="chal-hero-sub">Hit the targets, claim the rewards. Progress is tracked across every life.</div>
+        <div class="chal-hero-top"><b>🎯 ${WB.t("Challenges")}</b><span class="chal-count">${claimedCount}/${list.length}</span></div>
+        <div class="chal-hero-sub">${readyCount ? `🎁 ${readyCount} ${WB.t("ready to claim")} · ` : ""}${WB.t("Pin the ones you're chasing. Progress carries across every life.")}</div>
         <div class="chal-hero-bar"><div class="chal-hero-fill" style="width:${claimedCount / list.length * 100}%"></div></div>
+        <div class="chal-tierbar">${tierDots}</div>
       </div>
       <div class="chal-grid">`;
-    list.forEach(c => {
-      const claimed = !!st.challengesClaimed[c.id];
-      const raw = Math.max(0, c.prog(st));
-      const pct = Math.min(100, raw / c.goal * 100);
-      const done = raw >= c.goal;
-      const fmtN = n => n >= 1000 ? WB.fmt(n) : Math.floor(n);
-      const state = claimed ? "claimed" : done ? "ready" : "locked";
+    rows.forEach(({ c, raw, claimed, done, tracked, pct }) => {
+      const state = claimed ? "claimed" : done ? "ready" : "inprog";
       html += `
-        <div class="chal-card ${c.tier} ${state}">
-          <div class="chal-card-head"><span class="chal-ico">${c.icon}</span>
-            <span class="chal-tier">${c.tier}</span></div>
+        <div class="chal-card ${c.tier} ${state}${tracked ? " tracked" : ""}">
+          <div class="chal-card-head">
+            <span class="chal-ico">${c.icon}</span>
+            <span class="chal-tier">${WB.t(c.tier)}</span>
+            ${claimed ? "" : `<button class="chal-pin${tracked ? " on" : ""}" data-act="trackchal" data-key="${c.id}" title="${WB.t("Track this challenge")}">${tracked ? "📌" : "📍"}</button>`}
+          </div>
           <b class="chal-name">${WB.t(c.name)}</b>
           <div class="chal-desc">${WB.t(c.desc)}</div>
           <div class="chal-bar"><div class="chal-fill" style="width:${pct}%"></div></div>
-          <div class="chal-meta"><span>${fmtN(Math.min(raw, c.goal))} / ${fmtN(c.goal)}</span><span class="chal-reward">${WB.t(c.rewardText)}</span></div>
+          <div class="chal-meta"><span class="chal-prog">${fmtN(Math.min(raw, c.goal))} / ${fmtN(c.goal)}</span><span class="chal-reward">${WB.t(c.rewardText)}</span></div>
           ${claimed
             ? `<div class="chal-claimed">✓ ${WB.t("Claimed")}</div>`
             : done
@@ -914,17 +965,27 @@ WB.UI = (function () {
     });
     return html + `</div>`;
   }
+  function toggleTrackChallenge(id) {
+    if (st.challengeTrack[id]) delete st.challengeTrack[id];
+    else st.challengeTrack[id] = Date.now();
+    renderTab(true);
+  }
   function claimChallenge(id) {
     const c = WB.DATA.CHALLENGES.find(x => x.id === id);
     if (!c || st.challengesClaimed[id] || c.prog(st) < c.goal) return;
     st.challengesClaimed[id] = Date.now();
+    delete st.challengeTrack[id];
     const r = c.reward;
     let msg;
     if (r.money) { const amt = WB.GAME.incomePerSec() * 60 * r.money + 250; WB.GAME.earn(amt); msg = "+" + WB.fmt(amt, true); }
-    else if (r.boost) { st.boost = { mult: r.boost.mult, until: Date.now() + r.boost.sec * 1000 }; msg = `×${r.boost.mult} income for ${r.boost.sec}s`; }
-    else if (r.legacy) { st.prestige.legacy += r.legacy; msg = `+${r.legacy} Legacy`; }
-    else if (r.followers) { st.stats.followers += r.followers; msg = `+${WB.fmt(r.followers)} fans`; }
-    toast(`🎯 Challenge complete: ${WB.t(c.name)} — ${msg}`, "goal");
+    else if (r.boost) { st.boost = { mult: r.boost.mult, until: Date.now() + r.boost.sec * 1000 }; msg = `×${r.boost.mult} ${WB.t("income")} · ${r.boost.sec}s`; }
+    else if (r.legacy) { st.prestige.legacy += r.legacy; msg = `+${r.legacy} ${WB.t("Legacy")}`; }
+    else if (r.followers) { st.stats.followers += r.followers; msg = `+${WB.fmt(r.followers)} ${WB.t("fans")}`; }
+    else if (r.luck) { st.res.luck += r.luck; msg = `+${r.luck} ${WB.t("luck")}`; }
+    else if (r.intel) { st.res.intelligence += r.intel; msg = `+${r.intel} INT`; }
+    else if (r.rep) { st.res.reputation += r.rep; msg = `+${r.rep} ${WB.t("rep")}`; }
+    else if (r.xp) { WB.GAME.gainXp(r.xp.skill, r.xp.amount); msg = `+${r.xp.amount} XP`; }
+    toast(`${WB.t(c.name)} · ${msg}`, "goal");
     confetti();
     renderTab(true);
   }
@@ -1298,6 +1359,7 @@ WB.UI = (function () {
     }
     else if (act === "bail") WB.CRIME.postBail();
     else if (act === "claimchal") { claimChallenge(key); return; }
+    else if (act === "trackchal") { toggleTrackChallenge(key); return; }
     else if (act === "lbrefresh") { loadLeaderboard(); return; }
     else if (act === "openscam") WB.SCAM.open();
     else if (act === "dopost") { const r = WB.ACTIONS.start("social"); if (r && r.refused) toast("😮‍💨 " + r.refused, "bad"); }

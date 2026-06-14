@@ -72,6 +72,7 @@ WB.GAME = (function () {
     st.tutorialDone = false;
     st.empire = { unlocked: 0, ventures: {} }; // secret endgame — survives prestige
     st.challengesClaimed = {};                 // claimed challenge ids — survives prestige
+    st.challengeTrack = {};                    // pinned/tracked challenge ids — survives prestige
     st.lastSaved = Date.now();
     return st;
   }
@@ -578,7 +579,7 @@ WB.GAME = (function () {
       version: s.version, allTimeEarnings: s.allTimeEarnings, era: s.era,
       achievements: s.achievements, prestige: s.prestige, stats: s.stats, lastSaved: s.lastSaved,
       empire: s.empire, // you don't un-buy the Moon
-      challengesClaimed: s.challengesClaimed, tutorialDone: s.tutorialDone,
+      challengesClaimed: s.challengesClaimed, challengeTrack: s.challengeTrack, tutorialDone: s.tutorialDone,
     };
     const run = freshRun();
     Object.assign(s, run, keep);
