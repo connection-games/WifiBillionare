@@ -1138,8 +1138,8 @@ html[data-theme="dark"] .crime-btn:hover { background: rgba(41, 151, 255, 0.24);
   position: fixed; z-index: 290; pointer-events: none; border-radius: 16px;
   box-shadow: 0 0 0 9999px rgba(8, 10, 16, 0.62), 0 0 0 3px var(--accent), 0 0 34px rgba(0, 113, 227, 0.6);
   /* the cutout itself glides smoothly from one target to the next */
-  transition: left 0.55s cubic-bezier(0.4, 0, 0.1, 1), top 0.55s cubic-bezier(0.4, 0, 0.1, 1),
-              width 0.55s cubic-bezier(0.4, 0, 0.1, 1), height 0.55s cubic-bezier(0.4, 0, 0.1, 1);
+  transition: left 0.6s cubic-bezier(0.4, 0, 0.1, 1), top 0.6s cubic-bezier(0.4, 0, 0.1, 1),
+              width 0.6s cubic-bezier(0.4, 0, 0.1, 1), height 0.6s cubic-bezier(0.4, 0, 0.1, 1);
 }
 #tut-spot::after { /* pulsing focus ring that draws the eye to the target */
   content: ""; position: absolute; inset: -3px; border-radius: 18px;
@@ -1155,13 +1155,13 @@ html[data-theme="dark"] .crime-btn:hover { background: rgba(41, 151, 255, 0.24);
   background: var(--panel); border: 1px solid var(--border-soft); border-radius: 18px;
   padding: 15px 17px 13px; box-shadow: var(--shadow-lg);
   transform-origin: var(--tox, 50%) var(--toy, 50%);
-  transition: left 0.55s cubic-bezier(0.34, 1.3, 0.5, 1), top 0.55s cubic-bezier(0.34, 1.3, 0.5, 1);
+  /* glides smoothly to each new target position */
+  transition: left 0.6s cubic-bezier(0.4, 0, 0.1, 1), top 0.6s cubic-bezier(0.4, 0, 0.1, 1);
 }
-/* each step: the card shrinks in from the target then settles — "shrink & move" */
-#tut-box.tutpop { animation: tutfly 0.5s cubic-bezier(0.2, 1.1, 0.4, 1); }
+/* each step: a soft, settled pop — gentle enough to read while it glides into place */
+#tut-box.tutpop { animation: tutfly 0.44s cubic-bezier(0.2, 0.85, 0.3, 1); }
 @keyframes tutfly {
-  0% { transform: scale(0.4); opacity: 0; }
-  55% { opacity: 1; }
+  0% { transform: scale(0.9); opacity: 0; }
   100% { transform: scale(1); opacity: 1; }
 }
 /* a beak that points from the card at the highlighted element */
@@ -1776,3 +1776,45 @@ html[data-theme="dark"] .chal-card.legendary .chal-tier { color: #d08bff; }
 }
 .chal-card.legendary .chal-reward { background: rgba(191, 90, 242, 0.14); color: #bf5af2; }
 html[data-theme="dark"] .chal-card.legendary .chal-reward { color: #d08bff; }
+
+/* ============================================================ v6.5.3 — Smoother onboarding & tutorial, Adam */
+
+/* ---------- Onboarding: gentler fades + a staggered content reveal ---------- */
+#onboard { transition: opacity 0.5s ease; }
+.onboard-card { transition: transform 0.55s cubic-bezier(0.18, 1.08, 0.32, 1), opacity 0.5s ease; }
+#onboard.out { opacity: 0; }
+#onboard.out .onboard-card { transform: scale(0.95) translateY(8px); opacity: 0; }
+/* each element of the card rises in, one after the next */
+.onboard-card.ob-reveal > * { animation: obRise 0.55s cubic-bezier(0.2, 0.8, 0.3, 1) both; }
+.onboard-card.ob-reveal > *:nth-child(1)  { animation-delay: 0.05s; }
+.onboard-card.ob-reveal > *:nth-child(2)  { animation-delay: 0.10s; }
+.onboard-card.ob-reveal > *:nth-child(3)  { animation-delay: 0.15s; }
+.onboard-card.ob-reveal > *:nth-child(4)  { animation-delay: 0.20s; }
+.onboard-card.ob-reveal > *:nth-child(5)  { animation-delay: 0.25s; }
+.onboard-card.ob-reveal > *:nth-child(6)  { animation-delay: 0.30s; }
+.onboard-card.ob-reveal > *:nth-child(7)  { animation-delay: 0.35s; }
+.onboard-card.ob-reveal > *:nth-child(8)  { animation-delay: 0.40s; }
+.onboard-card.ob-reveal > *:nth-child(9)  { animation-delay: 0.45s; }
+.onboard-card.ob-reveal > *:nth-child(10) { animation-delay: 0.50s; }
+.onboard-card.ob-reveal > *:nth-child(11) { animation-delay: 0.55s; }
+@keyframes obRise { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: none; } }
+.ob-choice { transition: transform 0.14s var(--ease), background 0.15s, border-color 0.15s; }
+.ob-choice:active { transform: scale(0.96); }
+.ob-start { transition: transform 0.12s var(--ease), filter 0.15s, box-shadow 0.18s; }
+.ob-start:hover { transform: translateY(-1px); box-shadow: 0 8px 22px rgba(0, 113, 227, 0.35); }
+.ob-input { transition: border-color 0.18s, background 0.18s, box-shadow 0.18s; }
+.ob-input:focus { box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.18); }
+
+/* ---------- Adam: your built-in friend 🐐 ---------- */
+.fr-row.fr-adam {
+  border-color: rgba(52, 199, 89, 0.35);
+  background: linear-gradient(180deg, rgba(52, 199, 89, 0.07), transparent);
+}
+.fr-bestie { font-size: 10px; font-weight: 800; color: var(--green); margin-left: 5px; white-space: nowrap; }
+.fr-unread {
+  display: inline-flex; align-items: center; justify-content: center;
+  min-width: 16px; height: 16px; padding: 0 4px; margin-left: 5px;
+  background: var(--red); color: #fff; border-radius: 999px; font-size: 10px; font-weight: 800; vertical-align: middle;
+}
+.fr-offline-note { font-size: 11.5px; color: var(--muted); line-height: 1.5; margin-bottom: 12px; text-align: center; }
+.chat-top .fr-bestie { font-size: 14px; margin-left: 2px; }

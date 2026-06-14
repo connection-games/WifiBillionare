@@ -55,6 +55,17 @@ WB.I18N = (function () {
     "⚙️ General": "⚙️ Allmänt", "🤖 AI": "🤖 AI", "💾 Data": "💾 Data", "✨ Updates": "✨ Uppdateringar", "ℹ️ About": "ℹ️ Om oss",
     "🌍 Language": "🌍 Språk", "Choose your language. Swedish switches money to SEK.":
       "Välj språk. Svenska byter valuta till SEK.",
+    // onboarding
+    "Welcome to": "Välkommen till", "Let's set you up — you can change all of this later in Settings.":
+      "Vi fixar dig — du kan ändra allt detta senare i Inställningar.",
+    "Username": "Användarnamn", "how you'll show on the global leaderboard": "så här syns du på topplistan",
+    "e.g. RamenTycoon": "t.ex. RamenTycoon", "Language": "Språk", "Theme": "Tema",
+    "Light": "Ljust", "Dark": "Mörkt", "Start the grind": "Börja grinda",
+    "A satire game by Connection Games · for entertainment only": "Ett satirspel av Connection Games · endast underhållning",
+    // Adam (easter egg)
+    "bestie": "bästis", "Message Adam…": "Meddela Adam…",
+    "Add real players by username — Adam's always here for you. 🐐": "Lägg till riktiga spelare via användarnamn — Adam är alltid här för dig. 🐐",
+    "Real friends need Firestore + Anonymous sign-in — but Adam's always here. 🐐": "Riktiga vänner kräver Firestore + anonym inloggning — men Adam är alltid här. 🐐",
     "🦈 Sorko Mode": "🦈 Sorko-läge", "🎉 Confetti": "🎉 Konfetti", "💭 Thought Bubbles": "💭 Tankebubblor",
     "🌡️ Show Heat Meter": "🌡️ Visa hetta-mätare", "💾 Autosave Notices": "💾 Autospar-notiser",
     "Your #1 superfan haunts the Socials feed. Essential.": "Ditt största fan hemsöker Socialt-flödet. Oumbärligt.",

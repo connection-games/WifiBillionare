@@ -179,6 +179,10 @@ WB.THOUGHTS = (function () {
       "A friend sent me money once. I framed the notification.",
       "Networking is just friendship with a spreadsheet.",
       "My friends list is my real net worth. (The money helps though.)",
+      "Adam texted again. Man genuinely believes in me. 🐐",
+      "Adam said when I make it we're getting a yacht. I'm holding him to it.",
+      "Whatever happens, at least I've got Adam. Realest dude alive.",
+      "Adam doesn't even want anything from me. He just checks in. Wild.",
     ],
     smelly: [
       "I can smell the ambition. And also myself. Mostly myself.",

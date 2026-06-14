@@ -203,6 +203,11 @@ WB.UI = (function () {
   }
   let settingsTab = "general";
   const UPDATES = [
+    { v: "v6.5.3 — Smoother Start & a Friend Named Adam", items: [
+      "✨ Onboarding is buttery now — a staggered reveal, and switching language flips the entire game live with no reload or flash.",
+      "🧑‍🏫 The tutorial glides more smoothly between steps — the spotlight and card move together with a gentler, easier-to-follow pop.",
+      "🐐 Meet Adam — your built-in friend. He's always online at the top of your Friends list, says hi, and you can chat with him anytime. Adam's got you.",
+    ]},
     { v: "v6.5.2 — Challenges & Notifications", items: [
       "🎯 Challenges overhauled — 31 challenges across four tiers, including a brutal new ⚜️ Legendary tier (buy the Moon, own the Solar System, 1,000 lucky crits…).",
       "📌 Track challenges — pin the ones you're chasing and they float to the top with a highlight, with a per-tier progress breakdown up top.",
@@ -572,66 +577,85 @@ WB.UI = (function () {
   }
 
   // ============================================================ Onboarding (first launch)
+  // Re-render the whole UI in a new language WITHOUT a page reload (the old
+  // flow did location.reload(), which flashed the boot screen). The game sits
+  // live behind the onboarding overlay, so we just retranslate + re-render it.
+  function applyLanguageLive(lang) {
+    try {
+      WB.I18N.setLang(lang);
+      document.querySelectorAll("[data-i18n]").forEach(el => { el.innerHTML = WB.I18N.t(el.getAttribute("data-i18n")); });
+      renderTabBar(); renderHud(); renderTab(true);
+      WB.I18N.translateDom(document.body);
+    } catch (e) { /* worst case: language applies on next render */ }
+  }
   function showOnboarding(onDone) {
     let lang = WB.I18N.lang();
     let theme = document.documentElement.getAttribute("data-theme") || "light";
+    let name = "";
     const ov = document.createElement("div");
     ov.id = "onboard";
-    ov.innerHTML = `
-      <div class="onboard-card">
-        <div class="ob-logo logo-tile"><svg viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg">
-          <rect x="6" y="6" width="108" height="108" rx="28" fill="#101a35"/>
-          <path d="M28 56c9-9 20-13.5 32-13.5S83 47 92 56" stroke="#4dde80" stroke-width="8" stroke-linecap="round" fill="none"/>
-          <path d="M38 68c6-6 13.5-9 22-9s16 3 22 9" stroke="#4dde80" stroke-width="8" stroke-linecap="round" fill="none"/>
-          <circle cx="60" cy="86" r="11" fill="#ffc83d"/><text x="60" y="91" text-anchor="middle" font-size="15" font-weight="800" fill="#5a3804">$</text>
-        </svg></div>
-        <h1 class="ob-title">Welcome to <span>WiFi Billionaire</span></h1>
-        <p class="ob-tag">Let's set you up — you can change all of this later in Settings.</p>
-
-        <label class="ob-label">👤 Username <span class="ob-hint">— how you'll show on the global leaderboard</span></label>
-        <input id="ob-name" class="ob-input" maxlength="20" placeholder="e.g. RamenTycoon" autocomplete="off" spellcheck="false">
-
-        <label class="ob-label">🌍 Language</label>
-        <div class="ob-choices" id="ob-lang">
-          <button class="ob-choice ${lang === "en" ? "active" : ""}" data-v="en">🇬🇧 English</button>
-          <button class="ob-choice ${lang === "sv" ? "active" : ""}" data-v="sv">🇸🇪 Svenska</button>
-        </div>
-
-        <label class="ob-label">🎨 Theme</label>
-        <div class="ob-choices" id="ob-theme">
-          <button class="ob-choice ${theme === "light" ? "active" : ""}" data-v="light">☀️ Light</button>
-          <button class="ob-choice ${theme === "dark" ? "active" : ""}" data-v="dark">🌙 Dark</button>
-        </div>
-
-        <button class="btn primary wide ob-start" id="ob-start">Start the grind →</button>
-        <div class="ob-foot">📶 A satire game by Connection Games · for entertainment only</div>
-      </div>`;
     document.body.appendChild(ov);
-    requestAnimationFrame(() => ov.classList.add("in"));
-    setTimeout(() => { const n = $("ob-name"); if (n) n.focus(); }, 350);
 
-    ov.querySelector("#ob-lang").onclick = (e) => {
-      const b = e.target.closest(".ob-choice"); if (!b) return;
-      lang = b.dataset.v;
-      ov.querySelectorAll("#ob-lang .ob-choice").forEach(x => x.classList.toggle("active", x === b));
-    };
-    ov.querySelector("#ob-theme").onclick = (e) => {
-      const b = e.target.closest(".ob-choice"); if (!b) return;
-      theme = b.dataset.v; applyTheme(theme); // live preview
-      ov.querySelectorAll("#ob-theme .ob-choice").forEach(x => x.classList.toggle("active", x === b));
-    };
-    $("ob-name").onkeydown = (e) => { if (e.key === "Enter") $("ob-start").click(); };
-    $("ob-start").onclick = () => {
-      const name = ($("ob-name").value.trim() || "Player").slice(0, 20);
-      const langChanged = lang !== WB.I18N.lang();
-      try { localStorage.setItem("wb_username", name); localStorage.setItem("wb_onboarded", "1"); } catch (e) {}
-      WB.I18N.setLang(lang);
-      applyTheme(theme);
-      ov.classList.remove("in"); ov.classList.add("out");
-      setTimeout(() => ov.remove(), 450);
-      if (langChanged) { setTimeout(() => location.reload(), 300); return; } // re-render UI in the chosen language
-      if (onDone) setTimeout(onDone, 300);
-    };
+    const LOGO = `<div class="ob-logo logo-tile"><svg viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg">
+        <rect x="6" y="6" width="108" height="108" rx="28" fill="#101a35"/>
+        <path d="M28 56c9-9 20-13.5 32-13.5S83 47 92 56" stroke="#4dde80" stroke-width="8" stroke-linecap="round" fill="none"/>
+        <path d="M38 68c6-6 13.5-9 22-9s16 3 22 9" stroke="#4dde80" stroke-width="8" stroke-linecap="round" fill="none"/>
+        <circle cx="60" cy="86" r="11" fill="#ffc83d"/><text x="60" y="91" text-anchor="middle" font-size="15" font-weight="800" fill="#5a3804">$</text>
+      </svg></div>`;
+    function render(reveal) {
+      ov.innerHTML = `
+        <div class="onboard-card${reveal ? " ob-reveal" : ""}">
+          ${LOGO}
+          <h1 class="ob-title">${WB.t("Welcome to")} <span>WiFi Billionaire</span></h1>
+          <p class="ob-tag">${WB.t("Let's set you up — you can change all of this later in Settings.")}</p>
+          <label class="ob-label">👤 ${WB.t("Username")} <span class="ob-hint">— ${WB.t("how you'll show on the global leaderboard")}</span></label>
+          <input id="ob-name" class="ob-input" maxlength="20" placeholder="${WB.t("e.g. RamenTycoon")}" autocomplete="off" spellcheck="false" value="${esc(name)}">
+          <label class="ob-label">🌍 ${WB.t("Language")}</label>
+          <div class="ob-choices" id="ob-lang">
+            <button class="ob-choice ${lang === "en" ? "active" : ""}" data-v="en">🇬🇧 English</button>
+            <button class="ob-choice ${lang === "sv" ? "active" : ""}" data-v="sv">🇸🇪 Svenska</button>
+          </div>
+          <label class="ob-label">🎨 ${WB.t("Theme")}</label>
+          <div class="ob-choices" id="ob-theme">
+            <button class="ob-choice ${theme === "light" ? "active" : ""}" data-v="light">☀️ ${WB.t("Light")}</button>
+            <button class="ob-choice ${theme === "dark" ? "active" : ""}" data-v="dark">🌙 ${WB.t("Dark")}</button>
+          </div>
+          <button class="btn primary wide ob-start" id="ob-start">${WB.t("Start the grind")} →</button>
+          <div class="ob-foot">📶 ${WB.t("A satire game by Connection Games · for entertainment only")}</div>
+        </div>`;
+      bind();
+    }
+    function bind() {
+      const nameEl = $("ob-name");
+      nameEl.oninput = () => { name = nameEl.value; };
+      nameEl.onkeydown = e => { if (e.key === "Enter") $("ob-start").click(); };
+      $("ob-lang").onclick = e => {
+        const b = e.target.closest(".ob-choice"); if (!b || b.dataset.v === lang) return;
+        name = $("ob-name").value;
+        lang = b.dataset.v;
+        applyLanguageLive(lang);   // flip the game behind us, live — no reload
+        render(false);             // re-render this card in the new language
+        const n = $("ob-name"); if (n) { n.focus(); n.setSelectionRange(name.length, name.length); }
+      };
+      $("ob-theme").onclick = e => {
+        const b = e.target.closest(".ob-choice"); if (!b) return;
+        theme = b.dataset.v; applyTheme(theme); // live preview
+        ov.querySelectorAll("#ob-theme .ob-choice").forEach(x => x.classList.toggle("active", x === b));
+      };
+      $("ob-start").onclick = () => {
+        const finalName = (($("ob-name").value || "").trim() || "Player").slice(0, 20);
+        try { localStorage.setItem("wb_username", finalName); localStorage.setItem("wb_onboarded", "1"); } catch (e) {}
+        WB.I18N.setLang(lang); applyTheme(theme);
+        if ($("profile-name")) $("profile-name").textContent = finalName;
+        renderHud();
+        ov.classList.remove("in"); ov.classList.add("out");
+        setTimeout(() => ov.remove(), 520);
+        if (onDone) setTimeout(onDone, 380);
+      };
+    }
+    render(true);
+    requestAnimationFrame(() => ov.classList.add("in"));
+    setTimeout(() => { const n = $("ob-name"); if (n) n.focus(); }, 420);
   }
 
   // ============================================================ Confetti
@@ -1102,10 +1126,12 @@ WB.UI = (function () {
     if (profileTab === "skills") { body.innerHTML = tabSkills(); WB.I18N.translateDom(body); stopFriendsWatch(); return; }
     if (profileTab === "awards") { body.innerHTML = tabAchievements(); WB.I18N.translateDom(body); stopFriendsWatch(); return; }
     if (profileTab === "stats") { body.innerHTML = tabStats(); WB.I18N.translateDom(body); stopFriendsWatch(); return; }
-    // friends
+    // friends — Adam (the built-in friend) shows even offline; real friends need the cloud
     if (!WB.CLOUD || !WB.CLOUD.enabled) {
       stopFriendsWatch();
-      body.innerHTML = `<div class="fr-offline">📡 ${WB.t("Friends are offline.")}<br><span class="muted">${WB.t("Enable Firestore + Anonymous sign-in to play with friends (see README).")}</span></div>`;
+      social.friends = [];
+      body.innerHTML = `<div class="fr-offline-note">📡 ${WB.t("Real friends need Firestore + Anonymous sign-in — but Adam's always here. 🐐")}</div><div id="friends-view"></div>`;
+      renderFriendsView();
       return;
     }
     body.innerHTML = `<div id="friends-view"></div>`;
@@ -1123,36 +1149,114 @@ WB.UI = (function () {
     if (social.unsubFriends) { social.unsubFriends(); social.unsubFriends = null; }
     if (social.unsubChat) { social.unsubChat(); social.unsubChat = null; }
   }
+  function frRow(name, net, uid, online, extraClass, nameExtra) {
+    return `
+      <div class="fr-row ${extraClass || ""}">
+        <span class="fr-dot ${online ? "on" : ""}"></span>
+        <span class="fr-name">${esc(name)}${nameExtra || ""}</span>
+        <span class="fr-net">${net != null ? WB.fmt(net, true) : "—"}</span>
+        <span class="fr-actions">
+          <button class="btn tiny" data-fr="chat" data-uid="${uid}" data-name="${esc(name)}" title="Chat">💬</button>
+          <button class="btn tiny" data-fr="trade" data-uid="${uid}" data-name="${esc(name)}" title="Send money">🤝</button>
+          <button class="btn tiny" data-fr="bail" data-uid="${uid}" data-name="${esc(name)}" title="Bail out">⚖️</button>
+        </span></div>`;
+  }
   function renderFriendsView() {
     const v = $("friends-view"); if (!v) return;
-    if (social.view === "chat" && social.chatWith) return renderChat(v, social.chatWith);
+    if (social.view === "chat" && social.chatWith) {
+      return social.chatWith.uid === ADAM_UID ? renderAdamChat(v) : renderChat(v, social.chatWith);
+    }
+    maybeMeetAdam();
     const reqs = social.requests.map(r => `
       <div class="fr-req"><span>👋 <b>${esc(r.name)}</b> ${WB.t("wants to be friends")}</span>
         <span><button class="btn small primary" data-fr="acc" data-uid="${r.uid}" data-name="${esc(r.name)}">${WB.t("Accept")}</button>
         <button class="btn small subtle" data-fr="dec" data-uid="${r.uid}">${WB.t("Decline")}</button></span></div>`).join("");
-    const friends = social.friends.length ? social.friends.map(f => `
-      <div class="fr-row">
-        <span class="fr-dot ${f.online ? "on" : ""}"></span>
-        <span class="fr-name">${esc(f.name)}</span>
-        <span class="fr-net">${f.netWorth != null ? WB.fmt(f.netWorth, true) : "—"}</span>
-        <span class="fr-actions">
-          <button class="btn tiny" data-fr="chat" data-uid="${f.uid}" data-name="${esc(f.name)}" title="Chat">💬</button>
-          <button class="btn tiny" data-fr="trade" data-uid="${f.uid}" data-name="${esc(f.name)}" title="Send money">🤝</button>
-          <button class="btn tiny" data-fr="bail" data-uid="${f.uid}" data-name="${esc(f.name)}" title="Bail out">⚖️</button>
-        </span></div>`).join("") : `<div class="fr-empty">${WB.t("No friends yet — add someone by their username!")}</div>`;
+    // Adam: your built-in friend, always at the top. 🐐
+    const a = adamFriend();
+    const adamRow = frRow("Adam", a.netWorth, ADAM_UID, true, "fr-adam", ` <span class="fr-bestie">🐐 ${WB.t("bestie")}</span>${adamUnread ? ` <span class="fr-unread">${adamUnread}</span>` : ""}`);
+    const real = social.friends.map(f => frRow(f.name, f.netWorth, f.uid, f.online)).join("");
+    const onlineCount = social.friends.filter(f => f.online).length + 1; // +1 for Adam, always online
     v.innerHTML = `
       <div class="fr-add">
         <input id="fr-input" placeholder="${WB.t("Friend's username…")}" maxlength="20" autocomplete="off">
         <button class="btn primary small" data-fr="add">${WB.t("Add")}</button>
       </div>
       ${reqs ? `<div class="fr-section">${WB.t("Requests")}</div>${reqs}` : ""}
-      <div class="fr-section">${WB.t("Friends")} · ${social.friends.filter(f => f.online).length} ${WB.t("online")}</div>
-      <div class="fr-list">${friends}</div>`;
+      <div class="fr-section">${WB.t("Friends")} · ${onlineCount} ${WB.t("online")}</div>
+      <div class="fr-list">${adamRow}${real || (social.friends.length ? "" : `<div class="fr-empty">${WB.t("Add real players by username — Adam's always here for you. 🐐")}</div>`)}</div>`;
     v.querySelectorAll("[data-fr]").forEach(b => b.onclick = () => onFriendAction(b.dataset.fr, b.dataset.uid, b.dataset.name));
     const inp = $("fr-input"); if (inp) inp.onkeydown = e => { if (e.key === "Enter") onFriendAction("add"); };
   }
+
+  // ---------------------------------------------------------- 🐐 Adam (easter egg)
+  const ADAM_UID = "__adam__";
+  let adamChat = null;       // local message history with Adam
+  let adamUnread = 0;        // little unread badge on his row
+  function adamFriend() {
+    // Adam's always doing a little better than you — a friendly nudge to keep going.
+    const net = Math.max(50000, Math.floor((WB.GAME ? WB.GAME.netWorth() : 0) * 1.07) + 25000);
+    return { uid: ADAM_UID, name: "Adam", online: 1, netWorth: net, adam: true };
+  }
+  const ADAM_LINES = [
+    "Yo!! How's the grind going? 👀", "Bro you're built different fr 🐐",
+    "Saw your net worth. Sheeeesh. Proud of you man 🙌",
+    "Touch some grass once in a while ok? I worry about you 😅",
+    "When you make it, remember who believed first 🤝",
+    "I told everyone you'd blow up. Don't make me a liar 😎",
+    "Need anything? Money, bail, a pep talk — I got you. Always. 💯",
+    "Honestly you're the most locked-in person I know.",
+    "We're gonna laugh about the parents'-bedroom era from a yacht 🛥️",
+    "Keep going. You're closer than you think. 🚀",
+    "Hustle today, brunch forever. That's the motto.",
+    "Don't let the haters in the group chat get to you. I muted them.",
+  ];
+  function maybeMeetAdam() {
+    let met = false; try { met = !!localStorage.getItem("wb_adam_met"); } catch (e) {}
+    if (met) return;
+    try { localStorage.setItem("wb_adam_met", "1"); } catch (e) {}
+    adamUnread = 2;
+    setTimeout(() => toast("🐐 Adam added you as a friend — open the chat and say hi!", "good"), 400);
+  }
+  function renderAdamChat(v) {
+    adamUnread = 0;
+    if (!adamChat) adamChat = [
+      { from: "them", text: "Yo!! Look who finally opened their friends list 😂" },
+      { from: "them", text: "Proud of you for grinding, man. I'm always in your corner. 🤝" },
+    ];
+    const draw = () => {
+      const box = $("fr-chat"); if (!box) return;
+      box.innerHTML = adamChat.map(m => `<div class="cmsg ${m.from === "me" ? "me" : "them"}"><span>${esc(m.text)}</span></div>`).join("");
+      box.scrollTop = box.scrollHeight;
+    };
+    v.innerHTML = `
+      <div class="chat-top"><button class="btn tiny subtle" id="chat-back">‹ ${WB.t("Back")}</button><b>Adam</b><span class="fr-bestie">🐐</span></div>
+      <div class="fr-chat" id="fr-chat"></div>
+      <div class="fr-chat-row"><input id="fr-chat-input" placeholder="${WB.t("Message Adam…")}" maxlength="280" autocomplete="off"><button class="btn primary small" id="fr-chat-send">➤</button></div>`;
+    $("chat-back").onclick = () => { social.view = "list"; social.chatWith = null; renderFriendsView(); };
+    draw();
+    const send = () => {
+      const i = $("fr-chat-input"); const t = (i.value || "").trim(); if (!t) return;
+      adamChat.push({ from: "me", text: t }); i.value = ""; draw();
+      setTimeout(() => { adamChat.push({ from: "them", text: WB.pick(ADAM_LINES) }); if (social.chatWith && social.chatWith.uid === ADAM_UID) draw(); }, 700 + Math.random() * 700);
+    };
+    $("fr-chat-send").onclick = send;
+    $("fr-chat-input").onkeydown = e => { if (e.key === "Enter") send(); };
+    setTimeout(() => { const i = $("fr-chat-input"); if (i) i.focus(); }, 50);
+  }
   async function onFriendAction(kind, uid, name) {
     const C = WB.CLOUD;
+    if (uid === ADAM_UID) { // 🐐 Adam is local — handle him without the cloud
+      if (kind === "chat") { social.view = "chat"; social.chatWith = { uid: ADAM_UID, name: "Adam" }; renderFriendsView(); }
+      else if (kind === "trade") toast("🐐 Adam: keep your money, king 👑 — save it for the yacht.", "good");
+      else if (kind === "bail") {
+        if (WB.CRIME && WB.CRIME.inPrison()) {
+          WB.CRIME.crimeState().prisonUntil = 0;
+          toast("🐐 Adam pulled some strings — you're FREE. 'Told you I got you.' 🤝", "good");
+          confetti(); renderHud(); if (WB.UI && WB.UI.hidePrison) WB.UI.hidePrison();
+        } else toast("🐐 Adam: bro you're not even in jail 😭 stay outta trouble.", "good");
+      }
+      return;
+    }
     if (kind === "add") {
       const nm = ($("fr-input").value || "").trim(); if (!nm) return;
       const r = await C.sendFriendRequest(nm, socialName());
